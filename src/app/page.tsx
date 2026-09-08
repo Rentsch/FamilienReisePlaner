@@ -30,7 +30,7 @@ export default async function Home() {
           href="/login"
           className="rounded-full bg-foreground px-5 py-2 text-sm font-medium text-background hover:bg-[#383838] dark:hover:bg-[#ccc]"
         >
-          Anmelden / Registrieren
+          Anmelden
         </Link>
       )}
     </div>

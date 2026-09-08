@@ -1,4 +1,4 @@
-import { login, signup } from "./actions";
+import { login } from "./actions";
 
 export default async function LoginPage({
   searchParams,
@@ -46,18 +46,12 @@ export default async function LoginPage({
           />
         </label>
 
-        <div className="flex gap-3 pt-2">
+        <div className="flex pt-2">
           <button
             formAction={login}
             className="flex-1 rounded-full bg-foreground px-5 py-2 text-sm font-medium text-background hover:bg-[#383838] dark:hover:bg-[#ccc]"
           >
             Anmelden
-          </button>
-          <button
-            formAction={signup}
-            className="flex-1 rounded-full border border-black/10 px-5 py-2 text-sm font-medium hover:bg-black/[.04] dark:border-white/10 dark:hover:bg-[#1a1a1a]"
-          >
-            Registrieren
           </button>
         </div>
       </form>
