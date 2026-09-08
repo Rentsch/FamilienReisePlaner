@@ -3,13 +3,16 @@
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 
+export type SeatRow = "FRONT" | "BACK";
+
 export type SaveVariantInput = {
   shareToken: string;
   tripId: string;
   name: string;
   createdByParticipantId: string;
-  personAssignment: Record<string, string>; // participantId -> tripVehicleId
-  bikeAssignment: Record<string, string>; // participantId -> tripVehicleId
+  personAssignment: Record<string, { tripVehicleId: string; row: SeatRow }>; // participantId -> seat
+  driverByVehicle: Record<string, string>; // tripVehicleId -> participantId
+  bikeAssignment: Record<string, string>; // participantId -> tripTrailerId
   trailerAssignment: Record<string, string>; // tripTrailerId -> tripVehicleId
 };
 
@@ -21,12 +24,17 @@ export async function saveVariant(input: SaveVariantInput) {
       createdByParticipantId: input.createdByParticipantId,
       personAssignments: {
         create: Object.entries(input.personAssignment).map(
-          ([tripParticipantId, tripVehicleId]) => ({ tripParticipantId, tripVehicleId }),
+          ([tripParticipantId, { tripVehicleId, row }]) => ({
+            tripParticipantId,
+            tripVehicleId,
+            row,
+            isDriver: input.driverByVehicle[tripVehicleId] === tripParticipantId,
+          }),
         ),
       },
       bikeAssignments: {
         create: Object.entries(input.bikeAssignment).map(
-          ([tripParticipantId, tripVehicleId]) => ({ tripParticipantId, tripVehicleId }),
+          ([tripParticipantId, tripTrailerId]) => ({ tripParticipantId, tripTrailerId }),
         ),
       },
       trailerAssignments: {

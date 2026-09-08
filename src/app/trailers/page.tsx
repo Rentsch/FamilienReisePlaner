@@ -43,7 +43,7 @@ export default async function TrailersPage() {
             </select>
           </label>
           <label className="flex flex-col gap-1 text-sm text-zinc-700 dark:text-zinc-300">
-            Kapazität
+            Kapazität (Fahrräder, nur bei Fahrradträger)
             <input
               name="capacity"
               type="number"

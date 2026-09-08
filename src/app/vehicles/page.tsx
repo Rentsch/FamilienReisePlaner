@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { requireAdmin } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { AdminNav } from "@/components/AdminNav";
@@ -32,11 +33,22 @@ export default async function VehiclesPage() {
             />
           </label>
           <label className="flex flex-col gap-1 text-sm text-zinc-700 dark:text-zinc-300">
-            Sitzplätze
+            Sitzplätze gesamt
             <input
               name="seats"
               type="number"
               min={1}
+              required
+              className="w-24 rounded border border-black/10 px-3 py-2 dark:border-white/10 dark:bg-zinc-900"
+            />
+          </label>
+          <label className="flex flex-col gap-1 text-sm text-zinc-700 dark:text-zinc-300">
+            davon vorne (inkl. Fahrer)
+            <input
+              name="frontSeats"
+              type="number"
+              min={1}
+              defaultValue={2}
               required
               className="w-24 rounded border border-black/10 px-3 py-2 dark:border-white/10 dark:bg-zinc-900"
             />
@@ -79,12 +91,18 @@ export default async function VehiclesPage() {
                   {vehicle.name}
                 </p>
                 <p className="text-xs text-zinc-500 dark:text-zinc-400">
-                  {vehicle.seats} Sitzplätze
+                  {vehicle.frontSeats} vorne / {vehicle.seats - vehicle.frontSeats} hinten
                   {vehicle.hasTowHitch && " · Anhängerkupplung"}
                   {vehicle.travelTimeMinutes != null &&
                     ` · ${vehicle.travelTimeMinutes} Min.`}
                 </p>
               </div>
+              <Link
+                href={`/vehicles/${vehicle.id}/edit`}
+                className="text-sm text-zinc-600 hover:text-black dark:text-zinc-400 dark:hover:text-white"
+              >
+                Bearbeiten
+              </Link>
               <form action={deleteVehicle.bind(null, vehicle.id)}>
                 <button className="text-sm text-red-600 hover:text-red-800 dark:text-red-400">
                   Löschen

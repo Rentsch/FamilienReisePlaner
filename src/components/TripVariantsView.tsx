@@ -79,21 +79,31 @@ export function TripVariantsView({
                 }`}
               >
                 <div className="flex items-start justify-between gap-3">
-                  <div>
-                    <p className="font-medium text-black dark:text-zinc-50">{variant.name}</p>
+                  <Link href={`/t/${shareToken}/variant/${variant.id}`} className="min-w-0">
+                    <p className="font-medium text-black hover:underline dark:text-zinc-50">
+                      {variant.name}
+                    </p>
                     <p className="text-xs text-zinc-500 dark:text-zinc-400">
                       von {variant.creatorName} · {variant.usedVehicles} Auto
                       {variant.usedVehicles !== 1 && "s"} genutzt · {variant.voteCount} Stimme
                       {variant.voteCount !== 1 && "n"}
                     </p>
+                  </Link>
+                  <div className="flex shrink-0 gap-2">
+                    <Link
+                      href={`/t/${shareToken}/variant/${variant.id}`}
+                      className="rounded-full border border-black/10 px-4 py-1.5 text-sm font-medium hover:bg-black/[.04] dark:border-white/10 dark:hover:bg-[#1a1a1a]"
+                    >
+                      Ansehen
+                    </Link>
+                    <button
+                      disabled={pending || isMyFavorite}
+                      onClick={() => handleVote(variant.id)}
+                      className="rounded-full border border-black/10 px-4 py-1.5 text-sm font-medium hover:bg-black/[.04] disabled:opacity-50 dark:border-white/10 dark:hover:bg-[#1a1a1a]"
+                    >
+                      {isMyFavorite ? "★ Favorit" : "Favorisieren"}
+                    </button>
                   </div>
-                  <button
-                    disabled={pending || isMyFavorite}
-                    onClick={() => handleVote(variant.id)}
-                    className="shrink-0 rounded-full border border-black/10 px-4 py-1.5 text-sm font-medium hover:bg-black/[.04] disabled:opacity-50 dark:border-white/10 dark:hover:bg-[#1a1a1a]"
-                  >
-                    {isMyFavorite ? "★ Favorit" : "Favorisieren"}
-                  </button>
                 </div>
               </li>
             );

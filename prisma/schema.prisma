@@ -15,14 +15,20 @@ enum TrailerType {
   BIKE_RACK
 }
 
+enum SeatRow {
+  FRONT
+  BACK
+}
+
 // ---- Stammdaten (owned by the admin, reusable across trips) ----
 
 model Person {
-  id          String  @id @default(cuid())
-  adminUserId String // Supabase auth.users.id
-  name        String
-  canDrive    Boolean @default(false)
-  photoUrl    String?
+  id           String  @id @default(cuid())
+  adminUserId  String // Supabase auth.users.id
+  name         String
+  canDrive     Boolean @default(false)
+  backSeatOnly Boolean @default(false) // e.g. children who may only sit in the back
+  photoUrl     String?
 
   participations TripParticipant[]
 
@@ -34,6 +40,7 @@ model Vehicle {
   adminUserId                  String
   name                         String
   seats                        Int
+  frontSeats                   Int     @default(2) // includes the driver's seat
   hasTowHitch                  Boolean @default(false)
   travelTimeMinutes            Int?
   travelTimeWithTrailerMinutes Int?
@@ -93,7 +100,6 @@ model TripVehicle {
   vehicle   Vehicle @relation(fields: [vehicleId], references: [id])
 
   personAssignments  PersonAssignment[]
-  bikeAssignments    BikeAssignment[]
   trailerAssignments TrailerAssignment[]
   vehiclePlans       VariantVehiclePlan[]
 
@@ -140,21 +146,22 @@ model PersonAssignment {
   tripParticipant   TripParticipant @relation(fields: [tripParticipantId], references: [id])
   tripVehicleId     String
   tripVehicle       TripVehicle     @relation(fields: [tripVehicleId], references: [id])
+  row               SeatRow
+  isDriver          Boolean         @default(false)
 
   @@unique([variantId, tripParticipantId])
 }
 
 // A bike belongs to a trip participant (only meaningful when hasBike=true).
+// Bikes only ever attach to a BIKE_RACK trailer, never directly to a vehicle.
 model BikeAssignment {
   id                String          @id @default(cuid())
   variantId         String
   variant           Variant         @relation(fields: [variantId], references: [id], onDelete: Cascade)
   tripParticipantId String
   tripParticipant   TripParticipant @relation(fields: [tripParticipantId], references: [id])
-  tripVehicleId     String?
-  tripVehicle       TripVehicle?    @relation(fields: [tripVehicleId], references: [id])
-  tripTrailerId     String?
-  tripTrailer       TripTrailer?    @relation(fields: [tripTrailerId], references: [id])
+  tripTrailerId     String
+  tripTrailer       TripTrailer     @relation(fields: [tripTrailerId], references: [id])
 
   @@unique([variantId, tripParticipantId])
 }

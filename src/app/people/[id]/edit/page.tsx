@@ -65,6 +65,16 @@ export default async function EditPersonPage({
             Kann fahren
           </label>
 
+          <label className="flex items-center gap-2 text-sm text-zinc-700 dark:text-zinc-300">
+            <input
+              type="checkbox"
+              name="backSeatOnly"
+              defaultChecked={person.backSeatOnly}
+              className="h-4 w-4"
+            />
+            Nur Rücksitz (Kind)
+          </label>
+
           <button className="rounded-full bg-foreground px-5 py-2 text-sm font-medium text-background hover:bg-[#383838] dark:hover:bg-[#ccc]">
             Speichern
           </button>

@@ -45,6 +45,10 @@ export default async function PeoplePage() {
             <input type="checkbox" name="canDrive" className="h-4 w-4" />
             Kann fahren
           </label>
+          <label className="flex items-center gap-2 pb-2 text-sm text-zinc-700 dark:text-zinc-300">
+            <input type="checkbox" name="backSeatOnly" className="h-4 w-4" />
+            Nur Rücksitz (Kind)
+          </label>
           <button className="rounded-full bg-foreground px-5 py-2 text-sm font-medium text-background hover:bg-[#383838] dark:hover:bg-[#ccc]">
             Hinzufügen
           </button>
@@ -73,9 +77,14 @@ export default async function PeoplePage() {
                 <p className="font-medium text-black dark:text-zinc-50">
                   {person.name}
                 </p>
-                {person.canDrive && (
+                {(person.canDrive || person.backSeatOnly) && (
                   <p className="text-xs text-zinc-500 dark:text-zinc-400">
-                    Kann fahren
+                    {[
+                      person.canDrive && "Kann fahren",
+                      person.backSeatOnly && "Nur Rücksitz",
+                    ]
+                      .filter(Boolean)
+                      .join(" · ")}
                   </p>
                 )}
               </div>

@@ -9,10 +9,13 @@ import { voteForVariant } from "@/app/t/[shareToken]/actions";
 type VehicleView = {
   id: string;
   name: string;
+  frontSeats: number;
   seats: number;
-  people: { name: string; photoUrl: string | null }[];
+  driverName: string | null;
+  front: { name: string; photoUrl: string | null; isDriver: boolean }[];
+  back: { name: string; photoUrl: string | null }[];
+  trailerName: string | null;
   bikes: string[];
-  trailer: string | null;
 };
 
 export function VariantDetail({
@@ -74,26 +77,53 @@ export function VariantDetail({
           {variant.vehicles.map((v) => (
             <div key={v.id} className="rounded-xl border border-black/10 p-4 dark:border-white/10">
               <p className="mb-2 font-medium text-black dark:text-zinc-50">
-                {v.name} <span className="text-xs text-zinc-500 dark:text-zinc-400">({v.people.length}/{v.seats})</span>
+                {v.name}{" "}
+                <span className="text-xs text-zinc-500 dark:text-zinc-400">
+                  ({v.front.length + v.back.length}/{v.seats})
+                </span>
               </p>
-              <div className="flex flex-wrap gap-2">
-                {v.people.map((p) => (
+
+              <p className="mb-1 text-xs text-zinc-500 dark:text-zinc-400">Vorne</p>
+              <div className="mb-2 flex flex-wrap gap-2">
+                {v.front.map((p) => (
                   <span
                     key={p.name}
                     className="rounded-full border border-black/10 px-3 py-1 text-sm text-zinc-700 dark:border-white/10 dark:text-zinc-300"
                   >
+                    {p.isDriver && "🚗 "}
                     {p.name}
                   </span>
                 ))}
-                {v.bikes.map((b) => (
-                  <span key={b} className="text-sm text-zinc-500 dark:text-zinc-400">
-                    🚲 {b}
-                  </span>
-                ))}
-                {v.trailer && (
-                  <span className="text-sm text-zinc-500 dark:text-zinc-400">🚚 {v.trailer}</span>
-                )}
               </div>
+
+              {v.back.length > 0 && (
+                <>
+                  <p className="mb-1 text-xs text-zinc-500 dark:text-zinc-400">Hinten</p>
+                  <div className="mb-2 flex flex-wrap gap-2">
+                    {v.back.map((p) => (
+                      <span
+                        key={p.name}
+                        className="rounded-full border border-black/10 px-3 py-1 text-sm text-zinc-700 dark:border-white/10 dark:text-zinc-300"
+                      >
+                        {p.name}
+                      </span>
+                    ))}
+                  </div>
+                </>
+              )}
+
+              {(v.bikes.length > 0 || v.trailerName) && (
+                <div className="flex flex-wrap gap-2 border-t border-black/5 pt-2 dark:border-white/5">
+                  {v.bikes.map((b) => (
+                    <span key={b} className="text-sm text-zinc-500 dark:text-zinc-400">
+                      🚲 {b}
+                    </span>
+                  ))}
+                  {v.trailerName && (
+                    <span className="text-sm text-zinc-500 dark:text-zinc-400">🚚 {v.trailerName}</span>
+                  )}
+                </div>
+              )}
             </div>
           ))}
         </div>

@@ -24,45 +24,47 @@ export default async function VariantDetailPage({
         include: { tripParticipant: { include: { person: true } }, tripVehicle: { include: { vehicle: true } } },
       },
       bikeAssignments: {
-        include: {
-          tripParticipant: { include: { person: true } },
-          tripVehicle: { include: { vehicle: true } },
-          tripTrailer: { include: { trailer: true } },
-        },
+        include: { tripParticipant: { include: { person: true } }, tripTrailer: { include: { trailer: true } } },
       },
       trailerAssignments: {
-        include: { tripTrailer: { include: { trailer: true } }, tripVehicle: { include: { vehicle: true } } },
+        include: { tripTrailer: { include: { trailer: true } } },
       },
     },
   });
   if (!variant || variant.tripId !== trip.id) notFound();
 
-  const vehicles = variant.personAssignments
-    .reduce(
-      (acc, pa) => {
-        const key = pa.tripVehicleId;
-        if (!acc.some((v) => v.id === key)) {
-          acc.push({ id: key, name: pa.tripVehicle.vehicle.name, seats: pa.tripVehicle.vehicle.seats });
-        }
-        return acc;
-      },
-      [] as { id: string; name: string; seats: number }[],
-    )
-    .concat(
-      variant.bikeAssignments
-        .filter((ba) => ba.tripVehicleId && !variant.personAssignments.some((pa) => pa.tripVehicleId === ba.tripVehicleId))
-        .map((ba) => ({ id: ba.tripVehicleId!, name: ba.tripVehicle!.vehicle.name, seats: ba.tripVehicle!.vehicle.seats })),
-    )
-    .map((v) => ({
-      ...v,
-      people: variant.personAssignments
-        .filter((pa) => pa.tripVehicleId === v.id)
+  const usedVehicleIds = new Set(variant.personAssignments.map((pa) => pa.tripVehicleId));
+
+  const vehicles = [...usedVehicleIds].map((vehicleId) => {
+    const personAssignmentsForVehicle = variant.personAssignments.filter((pa) => pa.tripVehicleId === vehicleId);
+    const vehicle = personAssignmentsForVehicle[0].tripVehicle.vehicle;
+    const driver = personAssignmentsForVehicle.find((pa) => pa.isDriver);
+    const attachedTrailerAssignment = variant.trailerAssignments.find((ta) => ta.tripVehicleId === vehicleId);
+    const attachedTrailerId = attachedTrailerAssignment?.tripTrailerId;
+    const bikesOnTrailer = attachedTrailerId
+      ? variant.bikeAssignments.filter((ba) => ba.tripTrailerId === attachedTrailerId)
+      : [];
+
+    return {
+      id: vehicleId,
+      name: vehicle.name,
+      frontSeats: vehicle.frontSeats,
+      seats: vehicle.seats,
+      driverName: driver?.tripParticipant.person.name ?? null,
+      front: personAssignmentsForVehicle
+        .filter((pa) => pa.row === "FRONT")
+        .map((pa) => ({
+          name: pa.tripParticipant.person.name,
+          photoUrl: pa.tripParticipant.person.photoUrl,
+          isDriver: pa.isDriver,
+        })),
+      back: personAssignmentsForVehicle
+        .filter((pa) => pa.row === "BACK")
         .map((pa) => ({ name: pa.tripParticipant.person.name, photoUrl: pa.tripParticipant.person.photoUrl })),
-      bikes: variant.bikeAssignments
-        .filter((ba) => ba.tripVehicleId === v.id)
-        .map((ba) => ba.tripParticipant.person.name),
-      trailer: variant.trailerAssignments.find((ta) => ta.tripVehicleId === v.id)?.tripTrailer.trailer.name ?? null,
-    }));
+      trailerName: attachedTrailerAssignment?.tripTrailer.trailer.name ?? null,
+      bikes: bikesOnTrailer.map((ba) => ba.tripParticipant.person.name),
+    };
+  });
 
   return (
     <VariantDetail

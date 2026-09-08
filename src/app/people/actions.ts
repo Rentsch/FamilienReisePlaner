@@ -25,12 +25,13 @@ export async function createPerson(formData: FormData) {
 
   const name = (formData.get("name") as string).trim();
   const canDrive = formData.get("canDrive") === "on";
+  const backSeatOnly = formData.get("backSeatOnly") === "on";
   const photo = formData.get("photo") as File | null;
 
   const photoUrl = photo ? await uploadPhoto(supabase, user.id, photo) : undefined;
 
   await prisma.person.create({
-    data: { adminUserId: user.id, name, canDrive, photoUrl },
+    data: { adminUserId: user.id, name, canDrive, backSeatOnly, photoUrl },
   });
 
   revalidatePath("/people");
@@ -42,13 +43,14 @@ export async function updatePerson(id: string, formData: FormData) {
 
   const name = (formData.get("name") as string).trim();
   const canDrive = formData.get("canDrive") === "on";
+  const backSeatOnly = formData.get("backSeatOnly") === "on";
   const photo = formData.get("photo") as File | null;
 
   const photoUrl = photo ? await uploadPhoto(supabase, user.id, photo) : undefined;
 
   await prisma.person.update({
     where: { id, adminUserId: user.id },
-    data: { name, canDrive, ...(photoUrl ? { photoUrl } : {}) },
+    data: { name, canDrive, backSeatOnly, ...(photoUrl ? { photoUrl } : {}) },
   });
 
   revalidatePath("/people");

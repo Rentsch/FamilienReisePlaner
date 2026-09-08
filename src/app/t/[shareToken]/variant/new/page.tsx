@@ -29,14 +29,22 @@ export default async function NewVariantPage({
         name: p.person.name,
         photoUrl: p.person.photoUrl,
         hasBike: p.hasBike,
+        canDrive: p.person.canDrive,
+        backSeatOnly: p.person.backSeatOnly,
       }))}
       vehicles={trip.tripVehicles.map((v) => ({
         id: v.id,
         name: v.vehicle.name,
         seats: v.vehicle.seats,
+        frontSeats: v.vehicle.frontSeats,
         hasTowHitch: v.vehicle.hasTowHitch,
       }))}
-      trailers={trip.tripTrailers.map((t) => ({ id: t.id, name: t.trailer.name }))}
+      trailers={trip.tripTrailers.map((t) => ({
+        id: t.id,
+        name: t.trailer.name,
+        type: t.trailer.type,
+        capacity: t.trailer.capacity,
+      }))}
     />
   );
 }
