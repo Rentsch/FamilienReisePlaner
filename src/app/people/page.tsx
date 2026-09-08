@@ -1,0 +1,104 @@
+import Image from "next/image";
+import Link from "next/link";
+import { requireAdmin } from "@/lib/auth";
+import { prisma } from "@/lib/prisma";
+import { AdminNav } from "@/components/AdminNav";
+import { createPerson, deletePerson } from "./actions";
+
+export default async function PeoplePage() {
+  const user = await requireAdmin();
+  const people = await prisma.person.findMany({
+    where: { adminUserId: user.id },
+    orderBy: { name: "asc" },
+  });
+
+  return (
+    <div className="flex flex-1 flex-col">
+      <AdminNav email={user.email ?? ""} />
+      <main className="mx-auto w-full max-w-2xl flex-1 px-6 py-10">
+        <h1 className="mb-6 text-2xl font-semibold text-black dark:text-zinc-50">
+          Personen
+        </h1>
+
+        <form
+          action={createPerson}
+          className="mb-8 flex flex-wrap items-end gap-3 rounded-xl border border-black/10 p-4 dark:border-white/10"
+        >
+          <label className="flex flex-col gap-1 text-sm text-zinc-700 dark:text-zinc-300">
+            Name
+            <input
+              name="name"
+              required
+              className="rounded border border-black/10 px-3 py-2 dark:border-white/10 dark:bg-zinc-900"
+            />
+          </label>
+          <label className="flex flex-col gap-1 text-sm text-zinc-700 dark:text-zinc-300">
+            Foto
+            <input
+              name="photo"
+              type="file"
+              accept="image/*"
+              className="text-sm"
+            />
+          </label>
+          <label className="flex items-center gap-2 pb-2 text-sm text-zinc-700 dark:text-zinc-300">
+            <input type="checkbox" name="canDrive" className="h-4 w-4" />
+            Kann fahren
+          </label>
+          <button className="rounded-full bg-foreground px-5 py-2 text-sm font-medium text-background hover:bg-[#383838] dark:hover:bg-[#ccc]">
+            Hinzufügen
+          </button>
+        </form>
+
+        <ul className="flex flex-col gap-2">
+          {people.map((person) => (
+            <li
+              key={person.id}
+              className="flex items-center gap-3 rounded-lg border border-black/10 px-4 py-3 dark:border-white/10"
+            >
+              {person.photoUrl ? (
+                <Image
+                  src={person.photoUrl}
+                  alt={person.name}
+                  width={36}
+                  height={36}
+                  className="h-9 w-9 rounded-full object-cover"
+                />
+              ) : (
+                <div className="flex h-9 w-9 items-center justify-center rounded-full bg-zinc-200 text-sm font-medium text-zinc-600 dark:bg-zinc-800 dark:text-zinc-300">
+                  {person.name.slice(0, 1).toUpperCase()}
+                </div>
+              )}
+              <div className="flex-1">
+                <p className="font-medium text-black dark:text-zinc-50">
+                  {person.name}
+                </p>
+                {person.canDrive && (
+                  <p className="text-xs text-zinc-500 dark:text-zinc-400">
+                    Kann fahren
+                  </p>
+                )}
+              </div>
+              <Link
+                href={`/people/${person.id}/edit`}
+                className="text-sm text-zinc-600 hover:text-black dark:text-zinc-400 dark:hover:text-white"
+              >
+                Bearbeiten
+              </Link>
+              <form action={deletePerson.bind(null, person.id)}>
+                <button className="text-sm text-red-600 hover:text-red-800 dark:text-red-400">
+                  Löschen
+                </button>
+              </form>
+            </li>
+          ))}
+          {people.length === 0 && (
+            <p className="text-sm text-zinc-500 dark:text-zinc-400">
+              Noch keine Personen angelegt.
+            </p>
+          )}
+        </ul>
+      </main>
+    </div>
+  );
+}

@@ -10,91 +10,120 @@ datasource db {
   provider = "postgresql"
 }
 
-model Trip {
-  id          String    @id @default(cuid())
-  name        String
-  description String?
-  startDate   DateTime?
-  endDate     DateTime?
-  shareToken  String    @default(cuid()) @unique
-  adminUserId String // Supabase auth.users.id
-  createdAt   DateTime  @default(now())
-
-  people   Person[]
-  vehicles Vehicle[]
-  trailers Trailer[]
-  bikes    Bike[]
-  variants Variant[]
-}
-
-model Person {
-  id       String  @id @default(cuid())
-  tripId   String
-  trip     Trip    @relation(fields: [tripId], references: [id], onDelete: Cascade)
-  name     String
-  canDrive Boolean @default(false)
-
-  bikes           Bike[]
-  createdVariants Variant[]          @relation("VariantCreator")
-  assignments     PersonAssignment[]
-  votes           Vote[]
-
-  @@unique([tripId, name])
-}
-
 enum TrailerType {
   CARGO
   BIKE_RACK
 }
 
+// ---- Stammdaten (owned by the admin, reusable across trips) ----
+
+model Person {
+  id          String  @id @default(cuid())
+  adminUserId String // Supabase auth.users.id
+  name        String
+  canDrive    Boolean @default(false)
+  photoUrl    String?
+
+  participations TripParticipant[]
+
+  @@unique([adminUserId, name])
+}
+
 model Vehicle {
   id                           String  @id @default(cuid())
-  tripId                       String
-  trip                         Trip    @relation(fields: [tripId], references: [id], onDelete: Cascade)
+  adminUserId                  String
   name                         String
   seats                        Int
   hasTowHitch                  Boolean @default(false)
   travelTimeMinutes            Int?
   travelTimeWithTrailerMinutes Int?
 
+  tripVehicles TripVehicle[]
+}
+
+model Trailer {
+  id          String      @id @default(cuid())
+  adminUserId String
+  name        String
+  type        TrailerType
+  capacity    Int?
+
+  tripTrailers TripTrailer[]
+}
+
+// ---- Trip + participation (a person/vehicle/trailer opting into one trip) ----
+
+model Trip {
+  id          String    @id @default(cuid())
+  name        String
+  description String?
+  startDate   DateTime?
+  endDate     DateTime?
+  shareToken  String    @unique @default(cuid())
+  adminUserId String
+  createdAt   DateTime  @default(now())
+
+  participants TripParticipant[]
+  tripVehicles TripVehicle[]
+  tripTrailers TripTrailer[]
+  variants     Variant[]
+}
+
+model TripParticipant {
+  id       String  @id @default(cuid())
+  tripId   String
+  trip     Trip    @relation(fields: [tripId], references: [id], onDelete: Cascade)
+  personId String
+  person   Person  @relation(fields: [personId], references: [id])
+  hasBike  Boolean @default(false)
+
+  createdVariants   Variant[]          @relation("VariantCreator")
+  personAssignments PersonAssignment[]
+  bikeAssignments   BikeAssignment[]
+  votes             Vote[]
+
+  @@unique([tripId, personId])
+}
+
+model TripVehicle {
+  id        String  @id @default(cuid())
+  tripId    String
+  trip      Trip    @relation(fields: [tripId], references: [id], onDelete: Cascade)
+  vehicleId String
+  vehicle   Vehicle @relation(fields: [vehicleId], references: [id])
+
   personAssignments  PersonAssignment[]
   bikeAssignments    BikeAssignment[]
   trailerAssignments TrailerAssignment[]
   vehiclePlans       VariantVehiclePlan[]
+
+  @@unique([tripId, vehicleId])
 }
 
-model Trailer {
-  id       String      @id @default(cuid())
-  tripId   String
-  trip     Trip        @relation(fields: [tripId], references: [id], onDelete: Cascade)
-  name     String
-  type     TrailerType
-  capacity Int?
+model TripTrailer {
+  id        String  @id @default(cuid())
+  tripId    String
+  trip      Trip    @relation(fields: [tripId], references: [id], onDelete: Cascade)
+  trailerId String
+  trailer   Trailer @relation(fields: [trailerId], references: [id])
 
   trailerAssignments TrailerAssignment[]
   bikeAssignments    BikeAssignment[]
+
+  @@unique([tripId, trailerId])
 }
 
-model Bike {
-  id            String  @id @default(cuid())
-  tripId        String
-  trip          Trip    @relation(fields: [tripId], references: [id], onDelete: Cascade)
-  ownerPersonId String?
-  owner         Person? @relation(fields: [ownerPersonId], references: [id])
-  label         String?
-
-  assignments BikeAssignment[]
-}
+// ---- Variants (assignment proposals) ----
 
 model Variant {
-  id                String   @id @default(cuid())
-  tripId            String
-  trip              Trip     @relation(fields: [tripId], references: [id], onDelete: Cascade)
-  name              String
-  createdByPersonId String
-  createdBy         Person   @relation("VariantCreator", fields: [createdByPersonId], references: [id])
-  createdAt         DateTime @default(now())
-  updatedAt         DateTime @updatedAt
+  id                     String          @id @default(cuid())
+  tripId                 String
+  trip                   Trip            @relation(fields: [tripId], references: [id], onDelete: Cascade)
+  name                   String
+  createdByParticipantId String
+  createdBy              TripParticipant @relation("VariantCreator", fields: [createdByParticipantId], references: [id])
+  createdAt              DateTime        @default(now())
+  updatedAt              DateTime        @updatedAt
 
   personAssignments  PersonAssignment[]
   bikeAssignments    BikeAssignment[]
@@ -104,63 +133,64 @@ model Variant {
 }
 
 model PersonAssignment {
-  id        String  @id @default(cuid())
-  variantId String
-  variant   Variant @relation(fields: [variantId], references: [id], onDelete: Cascade)
-  personId  String
-  person    Person  @relation(fields: [personId], references: [id])
-  vehicleId String
-  vehicle   Vehicle @relation(fields: [vehicleId], references: [id])
+  id                String          @id @default(cuid())
+  variantId         String
+  variant           Variant         @relation(fields: [variantId], references: [id], onDelete: Cascade)
+  tripParticipantId String
+  tripParticipant   TripParticipant @relation(fields: [tripParticipantId], references: [id])
+  tripVehicleId     String
+  tripVehicle       TripVehicle     @relation(fields: [tripVehicleId], references: [id])
 
-  @@unique([variantId, personId])
+  @@unique([variantId, tripParticipantId])
 }
 
+// A bike belongs to a trip participant (only meaningful when hasBike=true).
 model BikeAssignment {
-  id        String   @id @default(cuid())
-  variantId String
-  variant   Variant  @relation(fields: [variantId], references: [id], onDelete: Cascade)
-  bikeId    String
-  bike      Bike     @relation(fields: [bikeId], references: [id])
-  vehicleId String?
-  vehicle   Vehicle? @relation(fields: [vehicleId], references: [id])
-  trailerId String?
-  trailer   Trailer? @relation(fields: [trailerId], references: [id])
+  id                String          @id @default(cuid())
+  variantId         String
+  variant           Variant         @relation(fields: [variantId], references: [id], onDelete: Cascade)
+  tripParticipantId String
+  tripParticipant   TripParticipant @relation(fields: [tripParticipantId], references: [id])
+  tripVehicleId     String?
+  tripVehicle       TripVehicle?    @relation(fields: [tripVehicleId], references: [id])
+  tripTrailerId     String?
+  tripTrailer       TripTrailer?    @relation(fields: [tripTrailerId], references: [id])
 
-  @@unique([variantId, bikeId])
+  @@unique([variantId, tripParticipantId])
 }
 
 model TrailerAssignment {
-  id        String  @id @default(cuid())
-  variantId String
-  variant   Variant @relation(fields: [variantId], references: [id], onDelete: Cascade)
-  trailerId String
-  trailer   Trailer @relation(fields: [trailerId], references: [id])
-  vehicleId String
-  vehicle   Vehicle @relation(fields: [vehicleId], references: [id])
+  id            String      @id @default(cuid())
+  variantId     String
+  variant       Variant     @relation(fields: [variantId], references: [id], onDelete: Cascade)
+  tripTrailerId String
+  tripTrailer   TripTrailer @relation(fields: [tripTrailerId], references: [id])
+  tripVehicleId String
+  tripVehicle   TripVehicle @relation(fields: [tripVehicleId], references: [id])
 
-  @@unique([variantId, trailerId])
+  @@unique([variantId, tripTrailerId])
 }
 
 model VariantVehiclePlan {
-  id                        String    @id @default(cuid())
+  id                        String      @id @default(cuid())
   variantId                 String
-  variant                   Variant   @relation(fields: [variantId], references: [id], onDelete: Cascade)
-  vehicleId                 String
-  vehicle                   Vehicle   @relation(fields: [vehicleId], references: [id])
+  variant                   Variant     @relation(fields: [variantId], references: [id], onDelete: Cascade)
+  tripVehicleId             String
+  tripVehicle               TripVehicle @relation(fields: [tripVehicleId], references: [id])
   departureTime             DateTime?
   travelTimeOverrideMinutes Int?
 
-  @@unique([variantId, vehicleId])
+  @@unique([variantId, tripVehicleId])
 }
 
 model Vote {
-  id        String   @id @default(cuid())
-  tripId    String
-  personId  String
-  person    Person   @relation(fields: [personId], references: [id])
-  variantId String
-  variant   Variant  @relation(fields: [variantId], references: [id], onDelete: Cascade)
-  updatedAt DateTime @updatedAt
+  id                String          @id @default(cuid())
+  tripId            String
+  tripParticipantId String          @unique
+  tripParticipant   TripParticipant @relation(fields: [tripParticipantId], references: [id])
+  variantId         String
+  variant           Variant         @relation(fields: [variantId], references: [id], onDelete: Cascade)
+  updatedAt         DateTime        @updatedAt
 
-  @@unique([tripId, personId])
+  @@index([tripId])
 }
