@@ -63,9 +63,9 @@ export default async function TripDetailPage({
         )}
 
         <div className="mb-8 flex flex-wrap items-center gap-3 rounded-xl border border-[var(--border)] p-4">
-          <div className="flex-1">
+          <div className="min-w-0 flex-1">
             <p className="text-xs text-zinc-500 dark:text-zinc-400">Share-Link für die Familie</p>
-            <p className="break-all font-mono text-sm text-foreground">{shareUrl}</p>
+            <p className="hidden break-all font-mono text-sm text-foreground sm:block">{shareUrl}</p>
           </div>
           <CopyLinkButton url={shareUrl} />
           <a

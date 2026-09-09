@@ -5,8 +5,13 @@ import { prisma } from "@/lib/prisma";
 import { AdminNav } from "@/components/AdminNav";
 import { createPerson, deletePerson } from "./actions";
 
-export default async function PeoplePage() {
+export default async function PeoplePage({
+  searchParams,
+}: {
+  searchParams: Promise<{ error?: string }>;
+}) {
   const user = await requireAdmin();
+  const { error } = await searchParams;
   const people = await prisma.person.findMany({
     where: { adminUserId: user.id },
     orderBy: { name: "asc" },
@@ -19,6 +24,12 @@ export default async function PeoplePage() {
         <h1 className="mb-6 text-2xl font-semibold text-foreground">
           Personen
         </h1>
+
+        {error && (
+          <p className="mb-4 rounded bg-red-50 px-3 py-2 text-sm text-red-700 dark:bg-red-950 dark:text-red-300">
+            {error}
+          </p>
+        )}
 
         <form
           action={createPerson}

@@ -3,6 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import { prisma } from "@/lib/prisma";
 import { AdminNav } from "@/components/AdminNav";
 import { formatTripDate } from "@/lib/time";
+import { deleteTrip } from "./trips/actions";
 
 export default async function Home() {
   const supabase = await createClient();
@@ -50,19 +51,22 @@ export default async function Home() {
 
         <ul className="flex flex-col gap-2">
           {trips.map((trip) => (
-            <li key={trip.id}>
-              <Link
-                href={`/trips/${trip.id}`}
-                className="flex items-center justify-between rounded-lg border border-[var(--border)] px-4 py-3 hover:bg-black/[.02] dark:hover:bg-white/[.03]"
-              >
-                <div>
-                  <p className="font-medium text-foreground">{trip.name}</p>
-                  <p className="text-xs text-zinc-500 dark:text-zinc-400">
-                    {formatTripDate(trip.date) && <>{formatTripDate(trip.date)} · </>}
-                    {trip.participants.length} Teilnehmer · {trip.variants.length} Varianten
-                  </p>
-                </div>
+            <li
+              key={trip.id}
+              className="flex items-center gap-2 rounded-lg border border-[var(--border)] px-4 py-3 hover:bg-black/[.02] dark:hover:bg-white/[.03]"
+            >
+              <Link href={`/trips/${trip.id}`} className="min-w-0 flex-1">
+                <p className="font-medium text-foreground">{trip.name}</p>
+                <p className="text-xs text-zinc-500 dark:text-zinc-400">
+                  {formatTripDate(trip.date) && <>{formatTripDate(trip.date)} · </>}
+                  {trip.participants.length} Teilnehmer · {trip.variants.length} Varianten
+                </p>
               </Link>
+              <form action={deleteTrip.bind(null, trip.id)}>
+                <button className="shrink-0 text-sm text-red-600 hover:text-red-800 dark:text-red-400">
+                  Löschen
+                </button>
+              </form>
             </li>
           ))}
           {trips.length === 0 && (

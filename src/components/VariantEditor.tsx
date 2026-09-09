@@ -17,7 +17,7 @@ import {
 import { CSS } from "@dnd-kit/utilities";
 import { IconSteeringWheel, IconLink, IconBike, IconCaravan, IconCar } from "@tabler/icons-react";
 import { getStoredParticipant } from "@/lib/participant";
-import { addMinutesToTime } from "@/lib/time";
+import { addMinutesToTime, formatDurationHM, parseDurationHM } from "@/lib/time";
 import { saveVariant, type SeatRow } from "@/app/t/[shareToken]/variant/actions";
 
 type Participant = {
@@ -266,26 +266,39 @@ function TravelPlanRow({
   onDepartureChange: (value: string) => void;
   onOverrideChange: (value: number | undefined) => void;
 }) {
+  // overrideMinutes only ever changes as a result of this input's own onChange/onBlur
+  // (round-tripping through the parent's state), so the mount-time initializer is enough.
+  const [durationInput, setDurationInput] = useState(() =>
+    overrideMinutes != null ? formatDurationHM(overrideMinutes) : "",
+  );
+
   const effectiveMinutes = overrideMinutes ?? defaultMinutes ?? undefined;
   const arrival = departure && effectiveMinutes != null ? addMinutesToTime(departure, effectiveMinutes) : null;
 
   return (
     <div className="flex flex-wrap items-center gap-1 text-xs text-zinc-500 dark:text-zinc-400">
+      <span>Abfahrt:</span>
       <input
         type="time"
         value={departure ?? ""}
         onChange={(e) => onDepartureChange(e.target.value)}
-        title="Abfahrt"
         className="rounded border border-[var(--border)] px-1.5 py-0.5 text-xs dark:bg-[var(--surface)]"
       />
       <input
-        type="number"
-        min={0}
-        placeholder={defaultMinutes != null ? `${defaultMinutes}′` : "Min."}
-        value={overrideMinutes ?? ""}
-        onChange={(e) => onOverrideChange(e.target.value ? Number(e.target.value) : undefined)}
-        title="Fahrzeit überschreiben (Min.)"
-        className="w-14 rounded border border-[var(--border)] px-1.5 py-0.5 text-xs dark:bg-[var(--surface)]"
+        type="text"
+        inputMode="text"
+        placeholder={defaultMinutes != null ? formatDurationHM(defaultMinutes) : "z.B. 5h30min"}
+        value={durationInput}
+        onChange={(e) => {
+          setDurationInput(e.target.value);
+          onOverrideChange(parseDurationHM(e.target.value) ?? undefined);
+        }}
+        onBlur={() => {
+          const parsed = parseDurationHM(durationInput);
+          setDurationInput(parsed != null ? formatDurationHM(parsed) : "");
+        }}
+        title="Fahrzeit überschreiben (z.B. 5h30min)"
+        className="w-20 rounded border border-[var(--border)] px-1.5 py-0.5 text-xs dark:bg-[var(--surface)]"
       />
       {arrival && (
         <span>
@@ -360,7 +373,7 @@ function VehicleBlock({
   const backSelected = selected?.kind === "seat" && selected.vehicleId === vehicle.id && selected.row === "BACK";
 
   return (
-    <div className="rounded-lg border-l-[3px] border-l-accent/50 py-3 pl-3 pr-3">
+    <div className="rounded-lg border-l-[3px] border-l-accent/50 bg-[var(--surface)]/60 py-3 pl-3 pr-3">
       <div className="mb-2 flex flex-wrap items-center justify-between gap-x-3 gap-y-1">
         <div className="flex items-center gap-2">
           <p className="font-medium text-foreground">{vehicle.name}</p>
@@ -377,7 +390,7 @@ function VehicleBlock({
         />
       </div>
 
-      <div className="flex items-start gap-3 overflow-x-auto pb-1">
+      <div className="flex items-start gap-3 overflow-x-auto px-1 pb-1">
         <SeatCluster
           label="Vorne"
           vehicleId={vehicle.id}
@@ -482,8 +495,8 @@ function VehicleBlock({
 
 const TABS = [
   { key: "person", label: "Personen" },
-  { key: "bike", label: "Fahrräder" },
   { key: "trailer", label: "Hänger" },
+  { key: "bike", label: "Fahrräder" },
 ] as const;
 type TabKey = (typeof TABS)[number]["key"];
 
@@ -689,6 +702,7 @@ function VariantEditorInner({
         setSelected(null);
       } else {
         setSelected({ kind: "hitch", vehicleId });
+        setActiveTab("trailer");
       }
       return;
     }
@@ -700,6 +714,7 @@ function VariantEditorInner({
       setSelected(null);
     } else {
       setSelected({ kind: "seat", vehicleId, row });
+      setActiveTab("person");
     }
   }
 
@@ -711,6 +726,7 @@ function VariantEditorInner({
       setSelected(null);
     } else {
       setSelected({ kind: "bikeSlot", trailerId });
+      setActiveTab("bike");
     }
   }
 
@@ -762,13 +778,19 @@ function VariantEditorInner({
     trailer: unassignedTrailers,
   };
 
-  const allPeopleAssigned = participants.every((p) => personAssignment[p.id]);
-  const allBikesAssigned = bikeOwners.every((p) => bikeAssignment[p.id]);
-  const allUsedVehiclesHaveDrivers = vehicles.every((v) => {
-    const used = countInRow(v.id, "FRONT") + countInRow(v.id, "BACK") > 0;
-    return !used || !!driverByVehicle[v.id];
-  });
-  const isComplete = allPeopleAssigned && allBikesAssigned && allUsedVehiclesHaveDrivers && name.trim().length > 0;
+  const unassignedPeopleNames = participants.filter((p) => !personAssignment[p.id]).map((p) => p.name);
+  const unassignedBikeNames = bikeOwners.filter((p) => !bikeAssignment[p.id]).map((p) => p.name);
+  const vehiclesMissingDriver = vehicles
+    .filter((v) => countInRow(v.id, "FRONT") + countInRow(v.id, "BACK") > 0 && !driverByVehicle[v.id])
+    .map((v) => v.name);
+
+  const missingReasons: string[] = [];
+  if (name.trim().length === 0) missingReasons.push("Name der Variante fehlt");
+  if (unassignedPeopleNames.length > 0) missingReasons.push(`Sitzplatz fehlt: ${unassignedPeopleNames.join(", ")}`);
+  if (unassignedBikeNames.length > 0) missingReasons.push(`Fahrradträger fehlt: ${unassignedBikeNames.join(", ")}`);
+  if (vehiclesMissingDriver.length > 0) missingReasons.push(`Fahrer fehlt: ${vehiclesMissingDriver.join(", ")}`);
+
+  const isComplete = missingReasons.length === 0;
 
   async function handleSave() {
     if (!isComplete) return;
@@ -830,10 +852,15 @@ function VariantEditorInner({
               {saving ? "Speichern…" : "Speichern"}
             </button>
           </div>
+          {!isComplete && (
+            <p className="mt-2 text-xs text-amber-600 dark:text-amber-400">
+              Noch nicht speicherbar – {missingReasons.join(" · ")}
+            </p>
+          )}
           {error && <p className="mt-2 text-sm text-red-600 dark:text-red-400">{error}</p>}
         </header>
 
-        <main className="mx-auto w-full max-w-2xl flex-1 overflow-y-auto px-6 py-6 pb-40">
+        <main className="mx-auto w-full max-w-2xl flex-1 overflow-y-auto px-4 py-6 pb-40">
           <div className="flex flex-col gap-3">
             {vehicles.map((vehicle) => {
               const driverId = driverByVehicle[vehicle.id];

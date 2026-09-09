@@ -16,7 +16,10 @@ export default async function ShareTokenPage({
 
   if (!trip) notFound();
 
-  const participants = trip.participants.map((p) => ({ id: p.id, name: p.person.name }));
+  // children (backSeatOnly) don't use the app themselves, so they're not selectable here
+  const participants = trip.participants
+    .filter((p) => !p.person.backSeatOnly)
+    .map((p) => ({ id: p.id, name: p.person.name }));
 
   return (
     <ShareEntry

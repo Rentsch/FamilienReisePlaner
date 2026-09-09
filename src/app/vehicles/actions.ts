@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { requireAdmin } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { Prisma } from "@/generated/prisma/client";
 
 function vehicleData(formData: FormData) {
   const seats = Number(formData.get("seats"));
@@ -41,6 +42,13 @@ export async function updateVehicle(id: string, formData: FormData) {
 
 export async function deleteVehicle(id: string) {
   const user = await requireAdmin();
-  await prisma.vehicle.delete({ where: { id, adminUserId: user.id } });
+  try {
+    await prisma.vehicle.delete({ where: { id, adminUserId: user.id } });
+  } catch (e) {
+    if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === "P2003") {
+      redirect(`/vehicles?error=${encodeURIComponent("Kann nicht gelöscht werden – wird noch in mindestens einer Reise verwendet.")}`);
+    }
+    throw e;
+  }
   revalidatePath("/vehicles");
 }

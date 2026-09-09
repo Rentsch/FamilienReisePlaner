@@ -6,8 +6,13 @@ import { createTrailer, deleteTrailer } from "./actions";
 
 const typeLabel = { CARGO: "Lasten-Anhänger", BIKE_RACK: "Fahrradträger" };
 
-export default async function TrailersPage() {
+export default async function TrailersPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ error?: string }>;
+}) {
   const user = await requireAdmin();
+  const { error } = await searchParams;
   const trailers = await prisma.trailer.findMany({
     where: { adminUserId: user.id },
     orderBy: { name: "asc" },
@@ -20,6 +25,12 @@ export default async function TrailersPage() {
         <h1 className="mb-6 text-2xl font-semibold text-foreground">
           Anhänger
         </h1>
+
+        {error && (
+          <p className="mb-4 rounded bg-red-50 px-3 py-2 text-sm text-red-700 dark:bg-red-950 dark:text-red-300">
+            {error}
+          </p>
+        )}
 
         <form
           action={createTrailer}

@@ -163,10 +163,10 @@ export function VariantDetail({
         </div>
       </header>
 
-      <main className="mx-auto w-full max-w-2xl flex-1 px-6 py-6">
+      <main className="mx-auto w-full max-w-2xl flex-1 px-4 py-6">
         <div className="flex flex-col gap-4">
           {variant.vehicles.map((v) => (
-            <div key={v.id} className="rounded-lg border-l-[3px] border-l-accent/50 py-3 pl-3 pr-3">
+            <div key={v.id} className="rounded-lg border-l-[3px] border-l-accent/50 bg-[var(--surface)]/60 py-3 pl-3 pr-3">
               <div className="mb-2 flex flex-wrap items-center justify-between gap-x-3 gap-y-1">
                 <p className="font-medium text-foreground">
                   {v.name}{" "}

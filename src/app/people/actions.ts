@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import { requireAdmin } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { prisma } from "@/lib/prisma";
+import { Prisma } from "@/generated/prisma/client";
 
 async function uploadPhoto(supabase: Awaited<ReturnType<typeof createClient>>, adminUserId: string, photo: File) {
   if (!photo || photo.size === 0) return undefined;
@@ -59,6 +60,13 @@ export async function updatePerson(id: string, formData: FormData) {
 
 export async function deletePerson(id: string) {
   const user = await requireAdmin();
-  await prisma.person.delete({ where: { id, adminUserId: user.id } });
+  try {
+    await prisma.person.delete({ where: { id, adminUserId: user.id } });
+  } catch (e) {
+    if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === "P2003") {
+      redirect(`/people?error=${encodeURIComponent("Kann nicht gelöscht werden – wird noch in mindestens einer Reise verwendet.")}`);
+    }
+    throw e;
+  }
   revalidatePath("/people");
 }

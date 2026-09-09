@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { requireAdmin } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { Prisma } from "@/generated/prisma/client";
 
 function trailerData(formData: FormData) {
   const capacity = formData.get("capacity") as string;
@@ -39,6 +40,13 @@ export async function updateTrailer(id: string, formData: FormData) {
 
 export async function deleteTrailer(id: string) {
   const user = await requireAdmin();
-  await prisma.trailer.delete({ where: { id, adminUserId: user.id } });
+  try {
+    await prisma.trailer.delete({ where: { id, adminUserId: user.id } });
+  } catch (e) {
+    if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === "P2003") {
+      redirect(`/trailers?error=${encodeURIComponent("Kann nicht gelöscht werden – wird noch in mindestens einer Reise verwendet.")}`);
+    }
+    throw e;
+  }
   revalidatePath("/trailers");
 }
