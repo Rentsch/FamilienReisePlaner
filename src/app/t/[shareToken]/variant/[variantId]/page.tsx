@@ -87,9 +87,9 @@ export default async function VariantDetailPage({
         .filter((pa) => pa.row === "BACK")
         .map((pa) => ({ name: pa.tripParticipant.person.name, photoUrl: pa.tripParticipant.person.photoUrl })),
       trailerName: attachedTrailerAssignment?.tripTrailer.trailer.name ?? null,
+      trailerType: trailerType ?? null,
       bikes: bikesOnTrailer.map((ba) => ({
         name: ba.tripParticipant.person.name,
-        photoUrl: ba.tripParticipant.person.photoUrl,
       })),
       departure,
       arrival: arrival ? `${arrival.time}${arrival.nextDay ? " (+1 Tag)" : ""}` : null,

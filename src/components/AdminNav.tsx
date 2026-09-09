@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { logout } from "@/app/login/actions";
+import { APP_VERSION } from "@/lib/version";
 
 const links = [
   { href: "/", label: "Reisen" },
@@ -13,7 +14,8 @@ export function AdminNav({ email }: { email: string }) {
     <nav className="flex flex-wrap items-center justify-between gap-3 border-b border-[var(--border)] bg-[var(--surface)] px-6 py-3">
       <div className="flex flex-wrap items-center gap-4">
         <span className="font-semibold text-foreground">
-          FamilienReisePlaner
+          FamilienReisePlaner{" "}
+          <span className="text-xs font-normal text-zinc-500 dark:text-zinc-400">v{APP_VERSION}</span>
         </span>
         {links.map((link) => (
           <Link

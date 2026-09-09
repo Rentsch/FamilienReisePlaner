@@ -64,19 +64,20 @@ export function TripVariantsView({
 
   return (
     <div className="flex flex-1 flex-col bg-background">
-      <header className="border-b border-[var(--border)] bg-[var(--surface)] px-6 py-4">
+      <header className="border-b border-[var(--border)] bg-[var(--surface)] px-6 py-2.5">
+        <div className="flex items-baseline justify-between gap-3">
+          <h1 className="truncate text-lg font-semibold text-foreground">{tripName}</h1>
+          {formatTripDate(tripDate) && (
+            <p className="shrink-0 text-xs text-zinc-500 dark:text-zinc-400">{formatTripDate(tripDate)}</p>
+          )}
+        </div>
         {isAdminView && (
           <Link
             href={`/trips/${tripId}`}
-            className="mb-1 inline-block text-xs font-medium text-accent hover:underline"
+            className="block text-right text-[11px] font-medium text-accent hover:underline"
           >
             ← Zurück zum Admin-Bereich
           </Link>
-        )}
-        <p className="text-sm text-zinc-500 dark:text-zinc-400">Hallo, {me.name}</p>
-        <h1 className="text-xl font-semibold text-foreground">{tripName}</h1>
-        {formatTripDate(tripDate) && (
-          <p className="text-sm text-zinc-500 dark:text-zinc-400">{formatTripDate(tripDate)}</p>
         )}
       </header>
 

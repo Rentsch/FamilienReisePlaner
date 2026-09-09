@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { IconCaravan, IconCar } from "@tabler/icons-react";
+import { IconBike, IconCaravan, IconCar } from "@tabler/icons-react";
 import { getStoredParticipant } from "@/lib/participant";
 import { voteForVariant } from "@/app/t/[shareToken]/actions";
 
@@ -19,7 +19,8 @@ type VehicleView = {
   front: { name: string; photoUrl: string | null; isDriver: boolean }[];
   back: { name: string; photoUrl: string | null }[];
   trailerName: string | null;
-  bikes: { name: string; photoUrl: string | null }[];
+  trailerType: "CARGO" | "BIKE_RACK" | null;
+  bikes: { name: string }[];
   departure: string | null;
   arrival: string | null;
 };
@@ -63,10 +64,15 @@ function PersonSlot({ name, photoUrl, isDriver }: { name: string; photoUrl: stri
   );
 }
 
-function BikeSlot({ name, photoUrl }: { name: string; photoUrl: string | null }) {
+function BikeSlot({ name }: { name: string }) {
   return (
     <div className="flex shrink-0 flex-col items-center gap-1 p-1 text-center">
-      <Avatar name={name} photoUrl={photoUrl} size={BIKE_SLOT_SIZE} />
+      <div
+        style={{ width: BIKE_SLOT_SIZE, height: BIKE_SLOT_SIZE }}
+        className="flex items-center justify-center rounded-full bg-[var(--surface)] text-zinc-500 dark:text-zinc-300"
+      >
+        <IconBike size={BIKE_SLOT_SIZE * 0.6} stroke={1.75} />
+      </div>
       <span className="max-w-[60px] truncate text-[11px] text-zinc-700 dark:text-zinc-300">{name}</span>
     </div>
   );
@@ -159,7 +165,7 @@ export function VariantDetail({
       <main className="mx-auto w-full max-w-2xl flex-1 px-6 py-6">
         <div className="flex flex-col gap-4">
           {variant.vehicles.map((v) => (
-            <div key={v.id} className="rounded-xl border border-[var(--border)] p-4">
+            <div key={v.id} className="rounded-lg border-l-[3px] border-l-accent/50 py-3 pl-3 pr-3">
               <p className="mb-2 font-medium text-foreground">
                 {v.name}{" "}
                 <span className="text-xs text-zinc-500 dark:text-zinc-400">
@@ -205,7 +211,11 @@ export function VariantDetail({
                           style={{ width: SLOT_SIZE, height: SLOT_SIZE }}
                           className="flex items-center justify-center rounded-full bg-[var(--surface)] text-zinc-500 dark:text-zinc-300"
                         >
-                          <IconCaravan size={SLOT_SIZE * 0.5} stroke={1.75} />
+                          {v.trailerType === "BIKE_RACK" ? (
+                            <IconBike size={SLOT_SIZE * 0.5} stroke={1.75} />
+                          ) : (
+                            <IconCaravan size={SLOT_SIZE * 0.5} stroke={1.75} />
+                          )}
                         </div>
                         <span className="max-w-[76px] truncate text-xs text-zinc-700 dark:text-zinc-300">
                           {v.trailerName}
@@ -224,7 +234,7 @@ export function VariantDetail({
                       </p>
                       <div className="flex flex-wrap gap-1">
                         {v.bikes.map((b) => (
-                          <BikeSlot key={b.name} name={b.name} photoUrl={b.photoUrl} />
+                          <BikeSlot key={b.name} name={b.name} />
                         ))}
                       </div>
                     </div>
