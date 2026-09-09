@@ -1,12 +1,13 @@
 @import "tailwindcss";
+@custom-variant dark (&:where(.dark, .dark *));
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
-  --surface: #ffffff;
-  --border: rgba(0, 0, 0, 0.1);
-  --accent: #92640c;
-  --accent-foreground: #ffffff;
+  --background: #0f1a2b;
+  --foreground: #eef2f8;
+  --surface: #16233a;
+  --border: rgba(232, 184, 87, 0.16);
+  --accent: #e8b857;
+  --accent-foreground: #1a1206;
 }
 
 @theme inline {
@@ -16,17 +17,6 @@
   --color-accent-foreground: var(--accent-foreground);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0f1a2b;
-    --foreground: #eef2f8;
-    --surface: #16233a;
-    --border: rgba(232, 184, 87, 0.16);
-    --accent: #e8b857;
-    --accent-foreground: #1a1206;
-  }
 }
 
 body {
