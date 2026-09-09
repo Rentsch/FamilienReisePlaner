@@ -14,6 +14,7 @@ type Variant = {
   voteCount: number;
   usedVehicles: number;
   voterParticipantIds: string[];
+  isIncomplete: boolean;
 };
 
 export function TripVariantsView({
@@ -111,8 +112,13 @@ export function TripVariantsView({
               >
                 <div className="flex items-start justify-between gap-3">
                   <Link href={`/t/${shareToken}/variant/${variant.id}`} className="min-w-0">
-                    <p className="font-medium text-foreground hover:underline">
+                    <p className="flex items-center gap-1.5 font-medium text-foreground hover:underline">
                       {variant.name}
+                      {variant.isIncomplete && (
+                        <span title="Noch nicht alle Personen zugeordnet" className="text-amber-500">
+                          ⚠
+                        </span>
+                      )}
                     </p>
                     <p className="text-xs text-zinc-500 dark:text-zinc-400">
                       von {variant.creatorName} · {variant.usedVehicles} Auto

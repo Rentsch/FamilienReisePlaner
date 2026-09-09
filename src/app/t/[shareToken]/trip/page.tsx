@@ -19,7 +19,7 @@ export default async function TripVariantsPage({
           include: {
             createdBy: { include: { person: true } },
             votes: true,
-            personAssignments: { select: { tripVehicleId: true } },
+            personAssignments: { select: { tripVehicleId: true, tripParticipantId: true } },
           },
           orderBy: { createdAt: "asc" },
         },
@@ -37,6 +37,7 @@ export default async function TripVariantsPage({
     voteCount: v.votes.length,
     usedVehicles: new Set(v.personAssignments.map((a) => a.tripVehicleId)).size,
     voterParticipantIds: v.votes.map((vote) => vote.tripParticipantId),
+    isIncomplete: new Set(v.personAssignments.map((a) => a.tripParticipantId)).size < trip.participants.length,
   }));
 
   const participants = trip.participants.map((p) => ({ id: p.id, name: p.person.name }));

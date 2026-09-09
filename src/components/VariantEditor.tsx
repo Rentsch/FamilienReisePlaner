@@ -46,6 +46,7 @@ type Selection =
 export type InitialVariant = {
   id: string;
   name: string;
+  createdByParticipantId: string;
   personAssignment: Record<string, { vehicleId: string; row: SeatRow }>;
   driverByVehicle: Record<string, string>;
   bikeAssignment: Record<string, string>;
@@ -784,16 +785,16 @@ function VariantEditorInner({
     .filter((v) => countInRow(v.id, "FRONT") + countInRow(v.id, "BACK") > 0 && !driverByVehicle[v.id])
     .map((v) => v.name);
 
-  const missingReasons: string[] = [];
-  if (name.trim().length === 0) missingReasons.push("Name der Variante fehlt");
-  if (unassignedPeopleNames.length > 0) missingReasons.push(`Sitzplatz fehlt: ${unassignedPeopleNames.join(", ")}`);
-  if (unassignedBikeNames.length > 0) missingReasons.push(`Fahrradträger fehlt: ${unassignedBikeNames.join(", ")}`);
-  if (vehiclesMissingDriver.length > 0) missingReasons.push(`Fahrer fehlt: ${vehiclesMissingDriver.join(", ")}`);
+  // a variant can be saved as a work in progress; only the name is required
+  const incompleteReasons: string[] = [];
+  if (unassignedPeopleNames.length > 0) incompleteReasons.push(`Sitzplatz fehlt: ${unassignedPeopleNames.join(", ")}`);
+  if (unassignedBikeNames.length > 0) incompleteReasons.push(`Fahrradträger fehlt: ${unassignedBikeNames.join(", ")}`);
+  if (vehiclesMissingDriver.length > 0) incompleteReasons.push(`Fahrer fehlt: ${vehiclesMissingDriver.join(", ")}`);
 
-  const isComplete = missingReasons.length === 0;
+  const canSave = name.trim().length > 0;
 
   async function handleSave() {
-    if (!isComplete) return;
+    if (!canSave) return;
     if (!initialVariant && !me) return;
     setSaving(true);
     setError(null);
@@ -845,16 +846,19 @@ function VariantEditorInner({
               className="w-full flex-1 rounded border border-[var(--border)] px-3 py-2 text-sm dark:bg-[var(--surface)]"
             />
             <button
-              disabled={!isComplete || saving}
+              disabled={!canSave || saving}
               onClick={handleSave}
               className="shrink-0 rounded-full bg-accent px-5 py-2 text-sm font-medium text-accent-foreground disabled:opacity-40 hover:brightness-110"
             >
               {saving ? "Speichern…" : "Speichern"}
             </button>
           </div>
-          {!isComplete && (
-            <p className="mt-2 text-xs text-amber-600 dark:text-amber-400">
-              Noch nicht speicherbar – {missingReasons.join(" · ")}
+          {!canSave && (
+            <p className="mt-2 text-xs text-amber-600 dark:text-amber-400">Name der Variante fehlt</p>
+          )}
+          {incompleteReasons.length > 0 && (
+            <p className="mt-2 text-xs text-zinc-500 dark:text-zinc-400">
+              ⚠ Noch nicht vollständig – {incompleteReasons.join(" · ")}
             </p>
           )}
           {error && <p className="mt-2 text-sm text-red-600 dark:text-red-400">{error}</p>}
@@ -1002,12 +1006,15 @@ export function VariantEditor({
   }, [shareToken]);
 
   const isValidParticipant = me !== null && participants.some((p) => p.id === me.id);
+  // editing an existing variant is limited to its creator (or the admin); creating a new one is open to anyone valid
+  const isCreator = !!initialVariant && me?.id === initialVariant.createdByParticipantId;
+  const canAccess = isAdminView || (isValidParticipant && (!initialVariant || isCreator));
 
   useEffect(() => {
-    if (checked && !isValidParticipant && !isAdminView) router.replace(`/t/${shareToken}`);
-  }, [checked, isValidParticipant, isAdminView, shareToken, router]);
+    if (checked && !canAccess) router.replace(`/t/${shareToken}`);
+  }, [checked, canAccess, shareToken, router]);
 
-  if (!checked || (!isValidParticipant && !isAdminView)) return null;
+  if (!checked || !canAccess) return null;
 
   return (
     <VariantEditorInner
