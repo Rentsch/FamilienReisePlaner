@@ -80,12 +80,17 @@ export default async function VariantDetailPage({
           name: pa.tripParticipant.person.name,
           photoUrl: pa.tripParticipant.person.photoUrl,
           isDriver: pa.isDriver,
-        })),
+        }))
+        // the driver always renders in the driver's seat (slot 0), matching the editor
+        .sort((a, b) => Number(b.isDriver) - Number(a.isDriver)),
       back: personAssignmentsForVehicle
         .filter((pa) => pa.row === "BACK")
         .map((pa) => ({ name: pa.tripParticipant.person.name, photoUrl: pa.tripParticipant.person.photoUrl })),
       trailerName: attachedTrailerAssignment?.tripTrailer.trailer.name ?? null,
-      bikes: bikesOnTrailer.map((ba) => ba.tripParticipant.person.name),
+      bikes: bikesOnTrailer.map((ba) => ({
+        name: ba.tripParticipant.person.name,
+        photoUrl: ba.tripParticipant.person.photoUrl,
+      })),
       departure,
       arrival: arrival ? `${arrival.time}${arrival.nextDay ? " (+1 Tag)" : ""}` : null,
     };

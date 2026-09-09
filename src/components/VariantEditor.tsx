@@ -37,8 +37,20 @@ type ChipData =
   | { type: "bike"; id: string; name: string }
   | { type: "trailer"; id: string; name: string };
 
+export type InitialVariant = {
+  id: string;
+  name: string;
+  personAssignment: Record<string, { vehicleId: string; row: SeatRow }>;
+  driverByVehicle: Record<string, string>;
+  bikeAssignment: Record<string, string>;
+  trailerAssignment: Record<string, string>;
+  departureByVehicle: Record<string, string>;
+  travelTimeOverrideByVehicle: Record<string, number>;
+};
+
 const AVATAR_SIZE = 56;
 const SLOT_SIZE = 44;
+const BIKE_SLOT_SIZE = 30;
 
 function Avatar({ name, photoUrl, size = AVATAR_SIZE }: { name: string; photoUrl: string | null; size?: number }) {
   if (photoUrl) {
@@ -137,22 +149,14 @@ function Chip({
   );
 }
 
-function DriverBadge({ isDriver, onToggle }: { isDriver: boolean; onToggle: () => void }) {
+function DriverBadge() {
   return (
-    <button
-      onClick={(e) => {
-        e.stopPropagation();
-        onToggle();
-      }}
-      title={isDriver ? "Fährt dieses Auto" : "Als Fahrer festlegen"}
-      className={`absolute -right-1 -top-1 flex h-6 w-6 items-center justify-center rounded-full border ${
-        isDriver
-          ? "border-accent bg-accent text-accent-foreground"
-          : "border-[var(--border)] bg-[var(--surface)] text-zinc-400"
-      }`}
+    <span
+      title="Fährt dieses Auto"
+      className="absolute -right-1 -top-1 flex h-6 w-6 items-center justify-center rounded-full border border-accent bg-accent text-accent-foreground"
     >
       <IconCar size={14} stroke={2} />
-    </button>
+    </span>
   );
 }
 
@@ -167,7 +171,6 @@ function SeatCluster({
   draggingPerson,
   onAreaClick,
   onOccupantClick,
-  onDriverToggle,
 }: {
   label: string;
   vehicleId: string;
@@ -179,7 +182,6 @@ function SeatCluster({
   draggingPerson: Participant | null;
   onAreaClick: () => void;
   onOccupantClick: (participantId: string) => void;
-  onDriverToggle: (participantId: string) => void;
 }) {
   const { setNodeRef, isOver } = useDroppable({ id: `vehicle:${vehicleId}:${row.toLowerCase()}` });
 
@@ -225,14 +227,7 @@ function SeatCluster({
               chip={{ type: "person", id: occupant.id, name: occupant.name, photoUrl: occupant.photoUrl }}
               selected={false}
               onClick={() => onOccupantClick(occupant.id)}
-              badge={
-                row === "FRONT" && occupant.canDrive ? (
-                  <DriverBadge
-                    isDriver={driverId === occupant.id}
-                    onToggle={() => onDriverToggle(occupant.id)}
-                  />
-                ) : undefined
-              }
+              badge={row === "FRONT" && driverId === occupant.id ? <DriverBadge /> : undefined}
             />
           );
         })}
@@ -309,7 +304,6 @@ function VehicleBlock({
   onHitchTap,
   onBikeSlotTap,
   onOccupantClick,
-  onDriverToggle,
   onDetachTrailer,
   onUnassignBike,
   onDepartureChange,
@@ -331,7 +325,6 @@ function VehicleBlock({
   onHitchTap: () => void;
   onBikeSlotTap: () => void;
   onOccupantClick: (participantId: string) => void;
-  onDriverToggle: (participantId: string) => void;
   onDetachTrailer: (trailerId: string) => void;
   onUnassignBike: (participantId: string) => void;
   onDepartureChange: (value: string) => void;
@@ -368,7 +361,6 @@ function VehicleBlock({
           draggingPerson={draggingPerson}
           onAreaClick={onFrontTap}
           onOccupantClick={onOccupantClick}
-          onDriverToggle={onDriverToggle}
         />
 
         <div className="mt-4 h-11 w-px bg-[var(--border)]" />
@@ -383,7 +375,6 @@ function VehicleBlock({
           draggingPerson={draggingPerson}
           onAreaClick={onBackTap}
           onOccupantClick={onOccupantClick}
-          onDriverToggle={() => {}}
         />
 
         {vehicle.hasTowHitch && (
@@ -412,37 +403,40 @@ function VehicleBlock({
             </div>
           </>
         )}
-      </div>
 
-      {attachedTrailer?.type === "BIKE_RACK" && (
-        <div className="pop-in mt-3 border-t border-[var(--border)] pt-3">
-          <p className="mb-1 text-[11px] text-zinc-500 dark:text-zinc-400">
-            Fahrräder ({bikesOnAttached.length}/{attachedTrailer.capacity ?? 0})
-          </p>
-          <div
-            ref={setBikeSlotsRef}
-            onClick={onBikeSlotTap}
-            className={`flex flex-wrap gap-1.5 rounded-lg p-1 transition-colors ${
-              bikeSlotsReject ? "bg-red-500/10 ring-1 ring-red-400/60" : isOverBikeSlots ? "bg-accent/10" : ""
-            }`}
-          >
-            {Array.from({ length: attachedTrailer.capacity ?? 0 }).map((_, i) => {
-              const bikeOwner = bikesOnAttached[i];
-              return bikeOwner ? (
-                <Chip
-                  key={bikeOwner.id}
-                  size={SLOT_SIZE}
-                  chip={{ type: "bike", id: bikeOwner.id, name: bikeOwner.name }}
-                  selected={false}
-                  onClick={() => onUnassignBike(bikeOwner.id)}
-                />
-              ) : (
-                <EmptySlot key={i} />
-              );
-            })}
-          </div>
-        </div>
-      )}
+        {attachedTrailer?.type === "BIKE_RACK" && (
+          <>
+            <div className="pop-in mt-4 h-11 w-px bg-[var(--border)]" />
+            <div className="pop-in flex flex-col gap-1">
+              <p className="text-[11px] text-zinc-500 dark:text-zinc-400">
+                Fahrräder ({bikesOnAttached.length}/{attachedTrailer.capacity ?? 0})
+              </p>
+              <div
+                ref={setBikeSlotsRef}
+                onClick={onBikeSlotTap}
+                className={`flex flex-wrap gap-1 rounded-lg p-1 transition-colors ${
+                  bikeSlotsReject ? "bg-red-500/10 ring-1 ring-red-400/60" : isOverBikeSlots ? "bg-accent/10" : ""
+                }`}
+              >
+                {Array.from({ length: attachedTrailer.capacity ?? 0 }).map((_, i) => {
+                  const bikeOwner = bikesOnAttached[i];
+                  return bikeOwner ? (
+                    <Chip
+                      key={bikeOwner.id}
+                      size={BIKE_SLOT_SIZE}
+                      chip={{ type: "bike", id: bikeOwner.id, name: bikeOwner.name }}
+                      selected={false}
+                      onClick={() => onUnassignBike(bikeOwner.id)}
+                    />
+                  ) : (
+                    <EmptySlot key={i} size={BIKE_SLOT_SIZE} />
+                  );
+                })}
+              </div>
+            </div>
+          </>
+        )}
+      </div>
 
       <TravelPlanRow
         defaultMinutes={defaultTravelMinutes}
@@ -471,6 +465,7 @@ function VariantEditorInner({
   trailers,
   tripTravelTimes,
   me,
+  initialVariant,
 }: {
   shareToken: string;
   tripId: string;
@@ -479,15 +474,28 @@ function VariantEditorInner({
   vehicles: Vehicle[];
   trailers: Trailer[];
   tripTravelTimes: TripTravelTimes;
-  me: { id: string; name: string };
+  me: { id: string; name: string } | null;
+  initialVariant?: InitialVariant;
 }) {
-  const [name, setName] = useState("");
-  const [personAssignment, setPersonAssignment] = useState<Record<string, { vehicleId: string; row: SeatRow }>>({});
-  const [driverByVehicle, setDriverByVehicle] = useState<Record<string, string>>({});
-  const [bikeAssignment, setBikeAssignment] = useState<Record<string, string>>({});
-  const [trailerAssignment, setTrailerAssignment] = useState<Record<string, string>>({});
-  const [departureByVehicle, setDepartureByVehicle] = useState<Record<string, string>>({});
-  const [travelTimeOverrideByVehicle, setTravelTimeOverrideByVehicle] = useState<Record<string, number>>({});
+  const [name, setName] = useState(initialVariant?.name ?? "");
+  const [personAssignment, setPersonAssignment] = useState<Record<string, { vehicleId: string; row: SeatRow }>>(
+    initialVariant?.personAssignment ?? {},
+  );
+  const [driverByVehicle, setDriverByVehicle] = useState<Record<string, string>>(
+    initialVariant?.driverByVehicle ?? {},
+  );
+  const [bikeAssignment, setBikeAssignment] = useState<Record<string, string>>(
+    initialVariant?.bikeAssignment ?? {},
+  );
+  const [trailerAssignment, setTrailerAssignment] = useState<Record<string, string>>(
+    initialVariant?.trailerAssignment ?? {},
+  );
+  const [departureByVehicle, setDepartureByVehicle] = useState<Record<string, string>>(
+    initialVariant?.departureByVehicle ?? {},
+  );
+  const [travelTimeOverrideByVehicle, setTravelTimeOverrideByVehicle] = useState<Record<string, number>>(
+    initialVariant?.travelTimeOverrideByVehicle ?? {},
+  );
   const [selected, setSelected] = useState<{ type: ChipData["type"]; id: string } | null>(null);
   const [draggingChip, setDraggingChip] = useState<ChipData | null>(null);
   const [activeTab, setActiveTab] = useState<TabKey>("person");
@@ -513,6 +521,7 @@ function VariantEditorInner({
     if (row === "FRONT" && countInRow(vehicleId, "FRONT", participantId) === 0 && !person.canDrive) return;
 
     const capacity = row === "FRONT" ? vehicle.frontSeats : vehicle.seats - vehicle.frontSeats;
+    const isFirstFrontSeat = row === "FRONT" && countInRow(vehicleId, row, participantId) === 0;
     if (countInRow(vehicleId, row, participantId) >= capacity) return;
 
     const old = personAssignment[participantId];
@@ -522,6 +531,10 @@ function VariantEditorInner({
         delete next[old.vehicleId];
         return next;
       });
+    }
+    // sitting in the driver's seat always makes you the driver, no manual toggle needed
+    if (isFirstFrontSeat) {
+      setDriverByVehicle((prev) => ({ ...prev, [vehicleId]: participantId }));
     }
 
     setPersonAssignment((prev) => ({ ...prev, [participantId]: { vehicleId, row } }));
@@ -541,20 +554,6 @@ function VariantEditorInner({
         return next;
       });
     }
-  }
-
-  function toggleDriver(vehicleId: string, participantId: string) {
-    const person = participants.find((p) => p.id === participantId);
-    if (!person?.canDrive) return;
-    setDriverByVehicle((prev) =>
-      prev[vehicleId] === participantId
-        ? (() => {
-            const next = { ...prev };
-            delete next[vehicleId];
-            return next;
-          })()
-        : { ...prev, [vehicleId]: participantId },
-    );
   }
 
   function assignBike(participantId: string, trailerId: string) {
@@ -707,14 +706,16 @@ function VariantEditorInner({
 
   async function handleSave() {
     if (!isComplete) return;
+    if (!initialVariant && !me) return;
     setSaving(true);
     setError(null);
     try {
       await saveVariant({
         shareToken,
         tripId,
+        variantId: initialVariant?.id,
         name: name.trim(),
-        createdByParticipantId: me.id,
+        createdByParticipantId: me?.id,
         personAssignment: Object.fromEntries(
           Object.entries(personAssignment).map(([pid, a]) => [pid, { tripVehicleId: a.vehicleId, row: a.row }]),
         ),
@@ -769,9 +770,12 @@ function VariantEditorInner({
         <main className="mx-auto w-full max-w-2xl flex-1 overflow-y-auto px-6 py-6 pb-40">
           <div className="flex flex-col gap-4">
             {vehicles.map((vehicle) => {
+              const driverId = driverByVehicle[vehicle.id];
               const frontOccupants = participants
                 .filter((p) => personAssignment[p.id]?.vehicleId === vehicle.id && personAssignment[p.id]?.row === "FRONT")
-                .map((p) => ({ id: p.id, name: p.name, photoUrl: p.photoUrl, canDrive: p.canDrive }));
+                .map((p) => ({ id: p.id, name: p.name, photoUrl: p.photoUrl, canDrive: p.canDrive }))
+                // the driver always renders in the driver's seat (slot 0)
+                .sort((a, b) => (a.id === driverId ? -1 : b.id === driverId ? 1 : 0));
               const backOccupants = participants
                 .filter((p) => personAssignment[p.id]?.vehicleId === vehicle.id && personAssignment[p.id]?.row === "BACK")
                 .map((p) => ({ id: p.id, name: p.name, photoUrl: p.photoUrl, canDrive: p.canDrive }));
@@ -794,7 +798,7 @@ function VariantEditorInner({
                   vehicle={vehicle}
                   frontOccupants={frontOccupants}
                   backOccupants={backOccupants}
-                  driverId={driverByVehicle[vehicle.id]}
+                  driverId={driverId}
                   attachedTrailer={attachedTrailer}
                   bikesOnAttached={bikesOnAttached}
                   defaultTravelMinutes={defaultTravelMinutes}
@@ -807,7 +811,6 @@ function VariantEditorInner({
                   onHitchTap={() => handleAreaTap("hitch", vehicle.id)}
                   onBikeSlotTap={() => attachedTrailer && handleBikeSlotTap(attachedTrailer.id)}
                   onOccupantClick={unassignPerson}
-                  onDriverToggle={(pid) => toggleDriver(vehicle.id, pid)}
                   onDetachTrailer={detachTrailer}
                   onUnassignBike={unassignBike}
                   onDepartureChange={(value) => setDeparture(vehicle.id, value)}
@@ -879,6 +882,7 @@ export function VariantEditor({
   vehicles,
   trailers,
   tripTravelTimes,
+  initialVariant,
 }: {
   shareToken: string;
   tripId: string;
@@ -887,6 +891,7 @@ export function VariantEditor({
   vehicles: Vehicle[];
   trailers: Trailer[];
   tripTravelTimes: TripTravelTimes;
+  initialVariant?: InitialVariant;
 }) {
   const router = useRouter();
   // localStorage isn't available during SSR, so `me` starts null on both server
@@ -905,10 +910,10 @@ export function VariantEditor({
   const isValidParticipant = me !== null && participants.some((p) => p.id === me.id);
 
   useEffect(() => {
-    if (checked && !isValidParticipant) router.replace(`/t/${shareToken}`);
-  }, [checked, isValidParticipant, shareToken, router]);
+    if (checked && !isValidParticipant && !isAdminView) router.replace(`/t/${shareToken}`);
+  }, [checked, isValidParticipant, isAdminView, shareToken, router]);
 
-  if (!checked || !isValidParticipant || !me) return null;
+  if (!checked || (!isValidParticipant && !isAdminView)) return null;
 
   return (
     <VariantEditorInner
@@ -919,7 +924,8 @@ export function VariantEditor({
       vehicles={vehicles}
       trailers={trailers}
       tripTravelTimes={tripTravelTimes}
-      me={me}
+      me={isValidParticipant ? me : null}
+      initialVariant={initialVariant}
     />
   );
 }

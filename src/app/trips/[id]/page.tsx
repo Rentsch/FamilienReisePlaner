@@ -43,9 +43,15 @@ export default async function TripDetailPage({
         <Link href="/" className="text-sm text-zinc-500 hover:text-foreground">
           ← Alle Reisen
         </Link>
-        <h1 className="mt-2 mb-1 text-2xl font-semibold text-foreground">
-          {trip.name}
-        </h1>
+        <div className="mt-2 mb-1 flex items-center justify-between gap-3">
+          <h1 className="text-2xl font-semibold text-foreground">{trip.name}</h1>
+          <Link
+            href={`/trips/${trip.id}/edit`}
+            className="shrink-0 rounded-full border border-[var(--border)] px-4 py-1.5 text-sm font-medium hover:bg-black/[.04] dark:hover:bg-white/[.06]"
+          >
+            Bearbeiten
+          </Link>
+        </div>
         {formatTripDate(trip.date) && (
           <p className="mb-1 text-sm font-medium text-accent">{formatTripDate(trip.date)}</p>
         )}
@@ -160,15 +166,24 @@ export default async function TripDetailPage({
           </div>
           <ul className="flex flex-col gap-2">
             {trip.variants.map((variant) => (
-              <li key={variant.id}>
+              <li
+                key={variant.id}
+                className="flex items-center justify-between gap-2 rounded-lg border border-[var(--border)] px-4 py-3 text-sm"
+              >
                 <Link
                   href={`/t/${trip.shareToken}/variant/${variant.id}`}
-                  className="flex items-center justify-between rounded-lg border border-[var(--border)] px-4 py-3 text-sm hover:bg-black/[.02] dark:hover:bg-white/[.03]"
+                  className="flex flex-1 items-center justify-between gap-2 hover:underline"
                 >
                   <span className="text-foreground">{variant.name}</span>
                   <span className="text-zinc-500 dark:text-zinc-400">
                     {variant.votes.length} Stimme{variant.votes.length !== 1 && "n"}
                   </span>
+                </Link>
+                <Link
+                  href={`/t/${trip.shareToken}/variant/${variant.id}/edit`}
+                  className="shrink-0 rounded-full border border-[var(--border)] px-3 py-1 text-xs font-medium hover:bg-black/[.04] dark:hover:bg-white/[.06]"
+                >
+                  Bearbeiten
                 </Link>
               </li>
             ))}
