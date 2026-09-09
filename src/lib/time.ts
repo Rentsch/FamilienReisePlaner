@@ -1,3 +1,9 @@
+export function formatTripDate(date: Date | string | null | undefined): string | null {
+  if (!date) return null;
+  const d = typeof date === "string" ? new Date(date) : date;
+  return d.toLocaleDateString("de-DE", { weekday: "short", day: "2-digit", month: "long", year: "numeric", timeZone: "UTC" });
+}
+
 export function addMinutesToTime(time: string, minutes: number): { time: string; nextDay: boolean } {
   const [h, m] = time.split(":").map(Number);
   const total = h * 60 + m + minutes;

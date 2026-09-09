@@ -23,11 +23,13 @@ type VehicleView = {
 export function VariantDetail({
   shareToken,
   tripId,
+  isAdminView,
   participants,
   variant,
 }: {
   shareToken: string;
   tripId: string;
+  isAdminView?: boolean;
   participants: string[];
   variant: {
     id: string;
@@ -39,16 +41,24 @@ export function VariantDetail({
   };
 }) {
   const router = useRouter();
-  const [me] = useState(() => getStoredParticipant(shareToken));
+  const [{ me, checked }, setParticipantState] = useState<{
+    me: { id: string; name: string } | null;
+    checked: boolean;
+  }>({ me: null, checked: false });
   const [pending, setPending] = useState(false);
+
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- deliberate post-mount localStorage read to avoid a hydration mismatch
+    setParticipantState({ me: getStoredParticipant(shareToken), checked: true });
+  }, [shareToken]);
 
   const isValid = me !== null && participants.includes(me.id);
 
   useEffect(() => {
-    if (!isValid) router.replace(`/t/${shareToken}`);
-  }, [isValid, shareToken, router]);
+    if (checked && !isValid) router.replace(`/t/${shareToken}`);
+  }, [checked, isValid, shareToken, router]);
 
-  if (!isValid || !me) return null;
+  if (!checked || !isValid || !me) return null;
 
   const isMyFavorite = variant.voterParticipantIds.includes(me.id);
 
@@ -60,15 +70,23 @@ export function VariantDetail({
   }
 
   return (
-    <div className="flex flex-1 flex-col bg-zinc-50 dark:bg-black">
-      <header className="border-b border-black/10 bg-white px-6 py-4 dark:border-white/10 dark:bg-zinc-950">
+    <div className="flex flex-1 flex-col bg-background">
+      <header className="border-b border-[var(--border)] bg-[var(--surface)] px-6 py-4">
+        {isAdminView && (
+          <Link
+            href={`/trips/${tripId}`}
+            className="mb-1 block text-xs font-medium text-accent hover:underline"
+          >
+            ← Zurück zum Admin-Bereich
+          </Link>
+        )}
         <Link
           href={`/t/${shareToken}/trip`}
-          className="text-sm text-zinc-500 hover:text-black dark:hover:text-white"
+          className="text-sm text-zinc-500 hover:text-foreground"
         >
           ← Alle Varianten
         </Link>
-        <h1 className="text-xl font-semibold text-black dark:text-zinc-50">{variant.name}</h1>
+        <h1 className="text-xl font-semibold text-foreground">{variant.name}</h1>
         <p className="text-xs text-zinc-500 dark:text-zinc-400">
           von {variant.creatorName} · {variant.voteCount} Stimme{variant.voteCount !== 1 && "n"}
         </p>
@@ -77,8 +95,8 @@ export function VariantDetail({
       <main className="mx-auto w-full max-w-2xl flex-1 px-6 py-6">
         <div className="flex flex-col gap-4">
           {variant.vehicles.map((v) => (
-            <div key={v.id} className="rounded-xl border border-black/10 p-4 dark:border-white/10">
-              <p className="mb-2 font-medium text-black dark:text-zinc-50">
+            <div key={v.id} className="rounded-xl border border-[var(--border)] p-4">
+              <p className="mb-2 font-medium text-foreground">
                 {v.name}{" "}
                 <span className="text-xs text-zinc-500 dark:text-zinc-400">
                   ({v.front.length + v.back.length}/{v.seats})
@@ -90,7 +108,7 @@ export function VariantDetail({
                 {v.front.map((p) => (
                   <span
                     key={p.name}
-                    className="rounded-full border border-black/10 px-3 py-1 text-sm text-zinc-700 dark:border-white/10 dark:text-zinc-300"
+                    className="rounded-full border border-[var(--border)] px-3 py-1 text-sm text-zinc-700 dark:text-zinc-300"
                   >
                     {p.isDriver && "🚗 "}
                     {p.name}
@@ -105,7 +123,7 @@ export function VariantDetail({
                     {v.back.map((p) => (
                       <span
                         key={p.name}
-                        className="rounded-full border border-black/10 px-3 py-1 text-sm text-zinc-700 dark:border-white/10 dark:text-zinc-300"
+                        className="rounded-full border border-[var(--border)] px-3 py-1 text-sm text-zinc-700 dark:text-zinc-300"
                       >
                         {p.name}
                       </span>
@@ -115,7 +133,7 @@ export function VariantDetail({
               )}
 
               {(v.bikes.length > 0 || v.trailerName) && (
-                <div className="flex flex-wrap gap-2 border-t border-black/5 pt-2 dark:border-white/5">
+                <div className="flex flex-wrap gap-2 border-t border-[var(--border)] pt-2">
                   {v.bikes.map((b) => (
                     <span key={b} className="text-sm text-zinc-500 dark:text-zinc-400">
                       🚲 {b}
@@ -128,7 +146,7 @@ export function VariantDetail({
               )}
 
               {(v.departure || v.arrival) && (
-                <div className="mt-2 flex gap-4 border-t border-black/5 pt-2 text-xs text-zinc-500 dark:border-white/5 dark:text-zinc-400">
+                <div className="mt-2 flex gap-4 border-t border-[var(--border)] pt-2 text-xs text-zinc-500 dark:text-zinc-400">
                   {v.departure && <span>Abfahrt {v.departure}</span>}
                   {v.arrival && <span>Ankunft ca. {v.arrival}</span>}
                 </div>
@@ -140,7 +158,7 @@ export function VariantDetail({
         <button
           disabled={pending || isMyFavorite}
           onClick={handleVote}
-          className="mt-6 w-full rounded-full border border-black/10 px-5 py-2 text-sm font-medium hover:bg-black/[.04] disabled:opacity-50 dark:border-white/10 dark:hover:bg-[#1a1a1a]"
+          className="mt-6 w-full rounded-full border border-[var(--border)] px-5 py-2 text-sm font-medium hover:bg-black/[.04] disabled:opacity-50 dark:hover:bg-white/[.06]"
         >
           {isMyFavorite ? "★ Dein Favorit" : "Als Favorit wählen"}
         </button>

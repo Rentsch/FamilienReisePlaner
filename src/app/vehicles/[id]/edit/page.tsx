@@ -21,13 +21,13 @@ export default async function EditVehiclePage({
     <div className="flex flex-1 flex-col">
       <AdminNav email={user.email ?? ""} />
       <main className="mx-auto w-full max-w-md flex-1 px-6 py-10">
-        <h1 className="mb-6 text-2xl font-semibold text-black dark:text-zinc-50">
+        <h1 className="mb-6 text-2xl font-semibold text-foreground">
           Auto bearbeiten
         </h1>
 
         <form
           action={updateVehicleWithId}
-          className="flex flex-col gap-4 rounded-xl border border-black/10 p-6 dark:border-white/10"
+          className="flex flex-col gap-4 rounded-xl border border-[var(--border)] p-6"
         >
           <label className="flex flex-col gap-1 text-sm text-zinc-700 dark:text-zinc-300">
             Name
@@ -35,7 +35,7 @@ export default async function EditVehiclePage({
               name="name"
               defaultValue={vehicle.name}
               required
-              className="rounded border border-black/10 px-3 py-2 dark:border-white/10 dark:bg-zinc-900"
+              className="rounded border border-[var(--border)] px-3 py-2 dark:bg-[var(--surface)]"
             />
           </label>
 
@@ -47,7 +47,7 @@ export default async function EditVehiclePage({
               min={1}
               defaultValue={vehicle.seats}
               required
-              className="rounded border border-black/10 px-3 py-2 dark:border-white/10 dark:bg-zinc-900"
+              className="rounded border border-[var(--border)] px-3 py-2 dark:bg-[var(--surface)]"
             />
           </label>
 
@@ -59,7 +59,7 @@ export default async function EditVehiclePage({
               min={1}
               defaultValue={vehicle.frontSeats}
               required
-              className="rounded border border-black/10 px-3 py-2 dark:border-white/10 dark:bg-zinc-900"
+              className="rounded border border-[var(--border)] px-3 py-2 dark:bg-[var(--surface)]"
             />
           </label>
 
@@ -73,7 +73,7 @@ export default async function EditVehiclePage({
             Anhängerkupplung
           </label>
 
-          <button className="rounded-full bg-foreground px-5 py-2 text-sm font-medium text-background hover:bg-[#383838] dark:hover:bg-[#ccc]">
+          <button className="rounded-full bg-accent px-5 py-2 text-sm font-medium text-accent-foreground hover:brightness-110">
             Speichern
           </button>
         </form>

@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
+import { getAdminUser } from "@/lib/auth";
 import { VariantEditor } from "@/components/VariantEditor";
 
 export default async function NewVariantPage({
@@ -9,14 +10,17 @@ export default async function NewVariantPage({
 }) {
   const { shareToken } = await params;
 
-  const trip = await prisma.trip.findUnique({
-    where: { shareToken },
-    include: {
-      participants: { include: { person: true } },
-      tripVehicles: { include: { vehicle: true } },
-      tripTrailers: { include: { trailer: true } },
-    },
-  });
+  const [trip, adminUser] = await Promise.all([
+    prisma.trip.findUnique({
+      where: { shareToken },
+      include: {
+        participants: { include: { person: true } },
+        tripVehicles: { include: { vehicle: true } },
+        tripTrailers: { include: { trailer: true } },
+      },
+    }),
+    getAdminUser(),
+  ]);
 
   if (!trip) notFound();
 
@@ -24,6 +28,7 @@ export default async function NewVariantPage({
     <VariantEditor
       shareToken={shareToken}
       tripId={trip.id}
+      isAdminView={adminUser?.id === trip.adminUserId}
       participants={trip.participants.map((p) => ({
         id: p.id,
         name: p.person.name,

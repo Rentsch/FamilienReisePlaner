@@ -15,8 +15,7 @@ export async function createTrip(formData: FormData) {
 
   const name = (formData.get("name") as string).trim();
   const description = (formData.get("description") as string) || undefined;
-  const startDate = (formData.get("startDate") as string) || undefined;
-  const endDate = (formData.get("endDate") as string) || undefined;
+  const date = (formData.get("date") as string) || undefined;
 
   const personIds = formData.getAll("personIds") as string[];
   const vehicleIds = formData.getAll("vehicleIds") as string[];
@@ -27,8 +26,7 @@ export async function createTrip(formData: FormData) {
       adminUserId: user.id,
       name,
       description,
-      startDate: startDate ? new Date(startDate) : undefined,
-      endDate: endDate ? new Date(endDate) : undefined,
+      date: date ? new Date(date) : undefined,
       travelTimeMinutes: num(formData, "travelTimeMinutes"),
       travelTimeWithBikeTrailerMinutes: num(formData, "travelTimeWithBikeTrailerMinutes"),
       travelTimeWithCargoTrailerMinutes: num(formData, "travelTimeWithCargoTrailerMinutes"),

@@ -15,14 +15,23 @@ export function ShareEntry({
   redirectTo: string;
 }) {
   const router = useRouter();
-  const [stored] = useState(() => getStoredParticipant(shareToken));
+  const [{ stored, checked }, setStoredState] = useState<{
+    stored: { id: string; name: string } | null;
+    checked: boolean;
+  }>({ stored: null, checked: false });
+
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- deliberate post-mount localStorage read to avoid a hydration mismatch
+    setStoredState({ stored: getStoredParticipant(shareToken), checked: true });
+  }, [shareToken]);
+
   const stillValid = stored !== null && participants.some((p) => p.id === stored.id);
 
   useEffect(() => {
-    if (stillValid) router.replace(redirectTo);
-  }, [stillValid, redirectTo, router]);
+    if (checked && stillValid) router.replace(redirectTo);
+  }, [checked, stillValid, redirectTo, router]);
 
-  if (stillValid) return null;
+  if (!checked || stillValid) return null;
 
   return (
     <NamePicker shareToken={shareToken} participants={participants} redirectTo={redirectTo} />

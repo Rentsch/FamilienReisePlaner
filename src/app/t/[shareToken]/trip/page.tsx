@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
+import { getAdminUser } from "@/lib/auth";
 import { TripVariantsView } from "@/components/TripVariantsView";
 
 export default async function TripVariantsPage({
@@ -9,20 +10,23 @@ export default async function TripVariantsPage({
 }) {
   const { shareToken } = await params;
 
-  const trip = await prisma.trip.findUnique({
-    where: { shareToken },
-    include: {
-      participants: { include: { person: true } },
-      variants: {
-        include: {
-          createdBy: { include: { person: true } },
-          votes: true,
-          personAssignments: { select: { tripVehicleId: true } },
+  const [trip, adminUser] = await Promise.all([
+    prisma.trip.findUnique({
+      where: { shareToken },
+      include: {
+        participants: { include: { person: true } },
+        variants: {
+          include: {
+            createdBy: { include: { person: true } },
+            votes: true,
+            personAssignments: { select: { tripVehicleId: true } },
+          },
+          orderBy: { createdAt: "asc" },
         },
-        orderBy: { createdAt: "asc" },
       },
-    },
-  });
+    }),
+    getAdminUser(),
+  ]);
 
   if (!trip) notFound();
 
@@ -42,6 +46,8 @@ export default async function TripVariantsPage({
       shareToken={shareToken}
       tripId={trip.id}
       tripName={trip.name}
+      tripDate={trip.date}
+      isAdminView={adminUser?.id === trip.adminUserId}
       participants={participants}
       variants={variants}
     />

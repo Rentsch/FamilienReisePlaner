@@ -22,13 +22,13 @@ export default async function EditPersonPage({
     <div className="flex flex-1 flex-col">
       <AdminNav email={user.email ?? ""} />
       <main className="mx-auto w-full max-w-md flex-1 px-6 py-10">
-        <h1 className="mb-6 text-2xl font-semibold text-black dark:text-zinc-50">
+        <h1 className="mb-6 text-2xl font-semibold text-foreground">
           Person bearbeiten
         </h1>
 
         <form
           action={updatePersonWithId}
-          className="flex flex-col gap-4 rounded-xl border border-black/10 p-6 dark:border-white/10"
+          className="flex flex-col gap-4 rounded-xl border border-[var(--border)] p-6"
         >
           {person.photoUrl && (
             <Image
@@ -46,7 +46,7 @@ export default async function EditPersonPage({
               name="name"
               defaultValue={person.name}
               required
-              className="rounded border border-black/10 px-3 py-2 dark:border-white/10 dark:bg-zinc-900"
+              className="rounded border border-[var(--border)] px-3 py-2 dark:bg-[var(--surface)]"
             />
           </label>
 
@@ -75,7 +75,7 @@ export default async function EditPersonPage({
             Nur Rücksitz (Kind)
           </label>
 
-          <button className="rounded-full bg-foreground px-5 py-2 text-sm font-medium text-background hover:bg-[#383838] dark:hover:bg-[#ccc]">
+          <button className="rounded-full bg-accent px-5 py-2 text-sm font-medium text-accent-foreground hover:brightness-110">
             Speichern
           </button>
         </form>

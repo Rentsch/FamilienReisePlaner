@@ -2,6 +2,7 @@ import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { prisma } from "@/lib/prisma";
 import { AdminNav } from "@/components/AdminNav";
+import { formatTripDate } from "@/lib/time";
 
 export default async function Home() {
   const supabase = await createClient();
@@ -11,13 +12,13 @@ export default async function Home() {
 
   if (!user) {
     return (
-      <div className="flex flex-1 flex-col items-center justify-center gap-6 bg-zinc-50 px-6 text-center dark:bg-black">
-        <h1 className="text-3xl font-semibold tracking-tight text-black dark:text-zinc-50">
+      <div className="flex flex-1 flex-col items-center justify-center gap-6 bg-background px-6 text-center">
+        <h1 className="text-3xl font-semibold tracking-tight text-foreground">
           FamilienReisePlaner
         </h1>
         <Link
           href="/login"
-          className="rounded-full bg-foreground px-5 py-2 text-sm font-medium text-background hover:bg-[#383838] dark:hover:bg-[#ccc]"
+          className="rounded-full bg-accent px-5 py-2 text-sm font-medium text-accent-foreground hover:brightness-110"
         >
           Anmelden
         </Link>
@@ -36,12 +37,12 @@ export default async function Home() {
       <AdminNav email={user.email ?? ""} />
       <main className="mx-auto w-full max-w-2xl flex-1 px-6 py-10">
         <div className="mb-6 flex items-center justify-between">
-          <h1 className="text-2xl font-semibold text-black dark:text-zinc-50">
+          <h1 className="text-2xl font-semibold text-foreground">
             Reisen
           </h1>
           <Link
             href="/trips/new"
-            className="rounded-full bg-foreground px-5 py-2 text-sm font-medium text-background hover:bg-[#383838] dark:hover:bg-[#ccc]"
+            className="rounded-full bg-accent px-5 py-2 text-sm font-medium text-accent-foreground hover:brightness-110"
           >
             Neue Reise
           </Link>
@@ -52,11 +53,12 @@ export default async function Home() {
             <li key={trip.id}>
               <Link
                 href={`/trips/${trip.id}`}
-                className="flex items-center justify-between rounded-lg border border-black/10 px-4 py-3 hover:bg-black/[.02] dark:border-white/10 dark:hover:bg-white/[.03]"
+                className="flex items-center justify-between rounded-lg border border-[var(--border)] px-4 py-3 hover:bg-black/[.02] dark:hover:bg-white/[.03]"
               >
                 <div>
-                  <p className="font-medium text-black dark:text-zinc-50">{trip.name}</p>
+                  <p className="font-medium text-foreground">{trip.name}</p>
                   <p className="text-xs text-zinc-500 dark:text-zinc-400">
+                    {formatTripDate(trip.date) && <>{formatTripDate(trip.date)} · </>}
                     {trip.participants.length} Teilnehmer · {trip.variants.length} Varianten
                   </p>
                 </div>

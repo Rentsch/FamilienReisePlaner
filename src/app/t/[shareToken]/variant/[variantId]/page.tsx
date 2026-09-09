@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { addMinutesToTime } from "@/lib/time";
+import { getAdminUser } from "@/lib/auth";
 import { VariantDetail } from "@/components/VariantDetail";
 
 export default async function VariantDetailPage({
@@ -10,10 +11,13 @@ export default async function VariantDetailPage({
 }) {
   const { shareToken, variantId } = await params;
 
-  const trip = await prisma.trip.findUnique({
-    where: { shareToken },
-    include: { participants: true },
-  });
+  const [trip, adminUser] = await Promise.all([
+    prisma.trip.findUnique({
+      where: { shareToken },
+      include: { participants: true },
+    }),
+    getAdminUser(),
+  ]);
   if (!trip) notFound();
 
   const variant = await prisma.variant.findUnique({
@@ -91,6 +95,7 @@ export default async function VariantDetailPage({
     <VariantDetail
       shareToken={shareToken}
       tripId={trip.id}
+      isAdminView={adminUser?.id === trip.adminUserId}
       participants={trip.participants.map((p) => p.id)}
       variant={{
         id: variant.id,

@@ -62,8 +62,7 @@ model Trip {
   id          String    @id @default(cuid())
   name        String
   description String?
-  startDate   DateTime?
-  endDate     DateTime?
+  date        DateTime?
   shareToken  String    @unique @default(cuid())
   adminUserId String
   createdAt   DateTime  @default(now())

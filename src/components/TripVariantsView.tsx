@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { getStoredParticipant } from "@/lib/participant";
+import { formatTripDate } from "@/lib/time";
 import { voteForVariant } from "@/app/t/[shareToken]/actions";
 
 type Variant = {
@@ -19,26 +20,38 @@ export function TripVariantsView({
   shareToken,
   tripId,
   tripName,
+  tripDate,
+  isAdminView,
   participants,
   variants,
 }: {
   shareToken: string;
   tripId: string;
   tripName: string;
+  tripDate?: Date | string | null;
+  isAdminView?: boolean;
   participants: { id: string; name: string }[];
   variants: Variant[];
 }) {
   const router = useRouter();
-  const [me] = useState(() => getStoredParticipant(shareToken));
+  const [{ me, checked }, setParticipantState] = useState<{
+    me: { id: string; name: string } | null;
+    checked: boolean;
+  }>({ me: null, checked: false });
   const [pending, setPending] = useState(false);
+
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- deliberate post-mount localStorage read to avoid a hydration mismatch
+    setParticipantState({ me: getStoredParticipant(shareToken), checked: true });
+  }, [shareToken]);
 
   const isValid = me !== null && participants.some((p) => p.id === me.id);
 
   useEffect(() => {
-    if (!isValid) router.replace(`/t/${shareToken}`);
-  }, [isValid, shareToken, router]);
+    if (checked && !isValid) router.replace(`/t/${shareToken}`);
+  }, [checked, isValid, shareToken, router]);
 
-  if (!isValid || !me) return null;
+  if (!checked || !isValid || !me) return null;
 
   const myVariantId = variants.find((v) => v.voterParticipantIds.includes(me.id))?.id;
 
@@ -50,17 +63,28 @@ export function TripVariantsView({
   }
 
   return (
-    <div className="flex flex-1 flex-col bg-zinc-50 dark:bg-black">
-      <header className="border-b border-black/10 bg-white px-6 py-4 dark:border-white/10 dark:bg-zinc-950">
+    <div className="flex flex-1 flex-col bg-background">
+      <header className="border-b border-[var(--border)] bg-[var(--surface)] px-6 py-4">
+        {isAdminView && (
+          <Link
+            href={`/trips/${tripId}`}
+            className="mb-1 inline-block text-xs font-medium text-accent hover:underline"
+          >
+            ← Zurück zum Admin-Bereich
+          </Link>
+        )}
         <p className="text-sm text-zinc-500 dark:text-zinc-400">Hallo, {me.name}</p>
-        <h1 className="text-xl font-semibold text-black dark:text-zinc-50">{tripName}</h1>
+        <h1 className="text-xl font-semibold text-foreground">{tripName}</h1>
+        {formatTripDate(tripDate) && (
+          <p className="text-sm text-zinc-500 dark:text-zinc-400">{formatTripDate(tripDate)}</p>
+        )}
       </header>
 
       <main className="mx-auto w-full max-w-2xl flex-1 px-6 py-8">
         <div className="mb-6 flex justify-end">
           <Link
             href={`/t/${shareToken}/variant/new`}
-            className="rounded-full bg-foreground px-5 py-2 text-sm font-medium text-background hover:bg-[#383838] dark:hover:bg-[#ccc]"
+            className="rounded-full bg-accent px-5 py-2 text-sm font-medium text-accent-foreground hover:brightness-110"
           >
             Neue Variante
           </Link>
@@ -73,14 +97,12 @@ export function TripVariantsView({
               <li
                 key={variant.id}
                 className={`rounded-xl border p-4 ${
-                  isMyFavorite
-                    ? "border-black bg-black/[.03] dark:border-white dark:bg-white/[.06]"
-                    : "border-black/10 dark:border-white/10"
+                  isMyFavorite ? "border-accent bg-accent/[.06]" : "border-[var(--border)]"
                 }`}
               >
                 <div className="flex items-start justify-between gap-3">
                   <Link href={`/t/${shareToken}/variant/${variant.id}`} className="min-w-0">
-                    <p className="font-medium text-black hover:underline dark:text-zinc-50">
+                    <p className="font-medium text-foreground hover:underline">
                       {variant.name}
                     </p>
                     <p className="text-xs text-zinc-500 dark:text-zinc-400">
@@ -92,14 +114,14 @@ export function TripVariantsView({
                   <div className="flex shrink-0 gap-2">
                     <Link
                       href={`/t/${shareToken}/variant/${variant.id}`}
-                      className="rounded-full border border-black/10 px-4 py-1.5 text-sm font-medium hover:bg-black/[.04] dark:border-white/10 dark:hover:bg-[#1a1a1a]"
+                      className="rounded-full border border-[var(--border)] px-4 py-1.5 text-sm font-medium hover:bg-black/[.04] dark:hover:bg-white/[.06]"
                     >
                       Ansehen
                     </Link>
                     <button
                       disabled={pending || isMyFavorite}
                       onClick={() => handleVote(variant.id)}
-                      className="rounded-full border border-black/10 px-4 py-1.5 text-sm font-medium hover:bg-black/[.04] disabled:opacity-50 dark:border-white/10 dark:hover:bg-[#1a1a1a]"
+                      className="rounded-full border border-[var(--border)] px-4 py-1.5 text-sm font-medium hover:bg-black/[.04] disabled:opacity-50 dark:hover:bg-white/[.06]"
                     >
                       {isMyFavorite ? "★ Favorit" : "Favorisieren"}
                     </button>

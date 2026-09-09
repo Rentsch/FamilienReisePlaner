@@ -1,7 +1,9 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
+import { useEffect } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import {
   DndContext,
   useDraggable,
@@ -9,9 +11,11 @@ import {
   PointerSensor,
   useSensor,
   useSensors,
+  type DragStartEvent,
   type DragEndEvent,
 } from "@dnd-kit/core";
 import { CSS } from "@dnd-kit/utilities";
+import { IconSteeringWheel, IconLink, IconBike, IconCaravan, IconCar } from "@tabler/icons-react";
 import { getStoredParticipant } from "@/lib/participant";
 import { addMinutesToTime } from "@/lib/time";
 import { saveVariant, type SeatRow } from "@/app/t/[shareToken]/variant/actions";
@@ -34,6 +38,7 @@ type ChipData =
   | { type: "trailer"; id: string; name: string };
 
 const AVATAR_SIZE = 56;
+const SLOT_SIZE = 44;
 
 function Avatar({ name, photoUrl, size = AVATAR_SIZE }: { name: string; photoUrl: string | null; size?: number }) {
   if (photoUrl) {
@@ -50,20 +55,26 @@ function Avatar({ name, photoUrl, size = AVATAR_SIZE }: { name: string; photoUrl
   return (
     <div
       style={{ width: size, height: size }}
-      className="flex items-center justify-center rounded-full bg-zinc-200 text-lg font-medium text-zinc-600 dark:bg-zinc-800 dark:text-zinc-300"
+      className="flex items-center justify-center rounded-full bg-[var(--surface)] text-lg font-medium text-zinc-600 dark:text-zinc-300"
     >
       {name.slice(0, 1).toUpperCase()}
     </div>
   );
 }
 
-function EmptySlot({ size = AVATAR_SIZE }: { size?: number }) {
+function EmptySlot({
+  size = SLOT_SIZE,
+  icon,
+}: {
+  size?: number;
+  icon?: React.ReactNode;
+}) {
   return (
     <div
       style={{ width: size, height: size }}
-      className="flex items-center justify-center rounded-full border-2 border-dashed border-zinc-300 text-xl text-zinc-300 dark:border-zinc-700 dark:text-zinc-700"
+      className="flex shrink-0 items-center justify-center rounded-full border-2 border-dashed border-[var(--border)] text-zinc-300 dark:text-zinc-600"
     >
-      +
+      {icon ?? <span className="text-lg leading-none">+</span>}
     </div>
   );
 }
@@ -73,11 +84,13 @@ function Chip({
   selected,
   onClick,
   badge,
+  size = AVATAR_SIZE,
 }: {
   chip: ChipData;
   selected: boolean;
   onClick: () => void;
   badge?: React.ReactNode;
+  size?: number;
 }) {
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
     id: `${chip.type}:${chip.id}`,
@@ -98,18 +111,22 @@ function Chip({
         e.stopPropagation();
         onClick();
       }}
-      className={`relative flex shrink-0 flex-col items-center gap-1 rounded-lg p-2 text-center ${
-        selected ? "ring-2 ring-black dark:ring-white" : ""
+      className={`relative flex shrink-0 flex-col items-center gap-1 rounded-lg p-1.5 text-center ${
+        selected ? "ring-2 ring-accent" : ""
       } ${isDragging ? "opacity-50" : ""}`}
     >
       {chip.type === "person" ? (
-        <Avatar name={chip.name} photoUrl={chip.photoUrl} />
+        <Avatar name={chip.name} photoUrl={chip.photoUrl} size={size} />
       ) : (
         <div
-          style={{ width: AVATAR_SIZE, height: AVATAR_SIZE }}
-          className="flex items-center justify-center rounded-full bg-zinc-100 text-2xl dark:bg-zinc-800"
+          style={{ width: size, height: size }}
+          className="flex items-center justify-center rounded-full bg-[var(--surface)] text-zinc-500 dark:text-zinc-300"
         >
-          {chip.type === "bike" ? "🚲" : "🚚"}
+          {chip.type === "bike" ? (
+            <IconBike size={size * 0.5} stroke={1.75} />
+          ) : (
+            <IconCaravan size={size * 0.5} stroke={1.75} />
+          )}
         </div>
       )}
       {badge}
@@ -128,66 +145,98 @@ function DriverBadge({ isDriver, onToggle }: { isDriver: boolean; onToggle: () =
         onToggle();
       }}
       title={isDriver ? "Fährt dieses Auto" : "Als Fahrer festlegen"}
-      className={`absolute -right-1 -top-1 flex h-6 w-6 items-center justify-center rounded-full border text-xs ${
+      className={`absolute -right-1 -top-1 flex h-6 w-6 items-center justify-center rounded-full border ${
         isDriver
-          ? "border-black bg-black text-white dark:border-white dark:bg-white dark:text-black"
-          : "border-zinc-300 bg-white text-zinc-400 dark:border-zinc-600 dark:bg-zinc-900"
+          ? "border-accent bg-accent text-accent-foreground"
+          : "border-[var(--border)] bg-[var(--surface)] text-zinc-400"
       }`}
     >
-      🚗
+      <IconCar size={14} stroke={2} />
     </button>
   );
 }
 
-function SeatRowArea({
+function SeatCluster({
+  label,
   vehicleId,
   row,
   capacity,
   occupants,
   driverId,
+  draggingChip,
+  draggingPerson,
   onAreaClick,
   onOccupantClick,
   onDriverToggle,
 }: {
+  label: string;
   vehicleId: string;
   row: SeatRow;
   capacity: number;
   occupants: { id: string; name: string; photoUrl: string | null; canDrive: boolean }[];
   driverId?: string;
+  draggingChip: ChipData | null;
+  draggingPerson: Participant | null;
   onAreaClick: () => void;
   onOccupantClick: (participantId: string) => void;
   onDriverToggle: (participantId: string) => void;
 }) {
   const { setNodeRef, isOver } = useDroppable({ id: `vehicle:${vehicleId}:${row.toLowerCase()}` });
 
+  const isFront = row === "FRONT";
+  const wouldBeFirstDriverSeat = isFront && occupants.length === 0;
+  const reject =
+    isOver &&
+    draggingChip &&
+    (draggingChip.type !== "person" ||
+      (isFront && draggingPerson?.backSeatOnly) ||
+      (wouldBeFirstDriverSeat && draggingPerson && !draggingPerson.canDrive));
+
   return (
-    <div
-      ref={setNodeRef}
-      onClick={onAreaClick}
-      className={`flex flex-wrap gap-2 rounded-lg p-2 transition-colors ${
-        isOver ? "bg-black/[.04] dark:bg-white/[.08]" : ""
-      }`}
-    >
-      {Array.from({ length: capacity }).map((_, i) => {
-        const occupant = occupants[i];
-        if (!occupant) return <EmptySlot key={i} />;
-        return (
-          <Chip
-            key={occupant.id}
-            chip={{ type: "person", id: occupant.id, name: occupant.name, photoUrl: occupant.photoUrl }}
-            selected={false}
-            onClick={() => onOccupantClick(occupant.id)}
-            badge={
-              row === "FRONT" && occupant.canDrive ? (
-                <DriverBadge
-                  isDriver={driverId === occupant.id}
-                  onToggle={() => onDriverToggle(occupant.id)}
-                />
-              ) : undefined
-            }
-          />
-        );
-      })}
+    <div className="flex flex-col gap-1">
+      <p className="text-[11px] text-zinc-500 dark:text-zinc-400">
+        {label} ({occupants.length}/{capacity})
+      </p>
+      <div
+        ref={setNodeRef}
+        onClick={onAreaClick}
+        className={`flex flex-wrap gap-1.5 rounded-lg p-1 transition-colors ${
+          reject ? "bg-red-500/10 ring-1 ring-red-400/60" : isOver ? "bg-accent/10" : ""
+        }`}
+      >
+        {Array.from({ length: capacity }).map((_, i) => {
+          const occupant = occupants[i];
+          if (!occupant) {
+            return (
+              <EmptySlot
+                key={i}
+                icon={
+                  isFront && i === 0 ? (
+                    <IconSteeringWheel size={20} stroke={1.75} />
+                  ) : undefined
+                }
+              />
+            );
+          }
+          return (
+            <Chip
+              key={occupant.id}
+              size={SLOT_SIZE}
+              chip={{ type: "person", id: occupant.id, name: occupant.name, photoUrl: occupant.photoUrl }}
+              selected={false}
+              onClick={() => onOccupantClick(occupant.id)}
+              badge={
+                row === "FRONT" && occupant.canDrive ? (
+                  <DriverBadge
+                    isDriver={driverId === occupant.id}
+                    onToggle={() => onDriverToggle(occupant.id)}
+                  />
+                ) : undefined
+              }
+            />
+          );
+        })}
+      </div>
     </div>
   );
 }
@@ -209,14 +258,14 @@ function TravelPlanRow({
   const arrival = departure && effectiveMinutes != null ? addMinutesToTime(departure, effectiveMinutes) : null;
 
   return (
-    <div className="mt-3 flex flex-wrap items-end gap-3 border-t border-black/5 pt-3 dark:border-white/5">
+    <div className="mt-3 flex flex-wrap items-end gap-3 border-t border-[var(--border)] pt-3">
       <label className="flex flex-col gap-1 text-xs text-zinc-500 dark:text-zinc-400">
         Abfahrt
         <input
           type="time"
           value={departure ?? ""}
           onChange={(e) => onDepartureChange(e.target.value)}
-          className="rounded border border-black/10 px-2 py-1 text-sm dark:border-white/10 dark:bg-zinc-900"
+          className="rounded border border-[var(--border)] px-2 py-1 text-sm dark:bg-[var(--surface)]"
         />
       </label>
       <label className="flex flex-col gap-1 text-xs text-zinc-500 dark:text-zinc-400">
@@ -227,7 +276,7 @@ function TravelPlanRow({
           placeholder={defaultMinutes != null ? String(defaultMinutes) : "—"}
           value={overrideMinutes ?? ""}
           onChange={(e) => onOverrideChange(e.target.value ? Number(e.target.value) : undefined)}
-          className="w-32 rounded border border-black/10 px-2 py-1 text-sm dark:border-white/10 dark:bg-zinc-900"
+          className="w-32 rounded border border-[var(--border)] px-2 py-1 text-sm dark:bg-[var(--surface)]"
         />
       </label>
       {arrival && (
@@ -253,6 +302,8 @@ function VehicleBlock({
   defaultTravelMinutes,
   departure,
   travelTimeOverride,
+  draggingChip,
+  draggingPerson,
   onFrontTap,
   onBackTap,
   onHitchTap,
@@ -273,6 +324,8 @@ function VehicleBlock({
   defaultTravelMinutes: number | null;
   departure: string | undefined;
   travelTimeOverride: number | undefined;
+  draggingChip: ChipData | null;
+  draggingPerson: Participant | null;
   onFrontTap: () => void;
   onBackTap: () => void;
   onHitchTap: () => void;
@@ -291,75 +344,86 @@ function VehicleBlock({
     id: attachedTrailer ? `trailer:${attachedTrailer.id}:bikes` : `trailer:none:bikes`,
   });
 
+  const hitchReject = isOverHitch && draggingChip && draggingChip.type !== "trailer";
+  const bikeSlotsReject = isOverBikeSlots && draggingChip && draggingChip.type !== "bike";
+
   return (
-    <div className="rounded-xl border border-black/10 p-4 dark:border-white/10">
+    <div className="rounded-xl border border-[var(--border)] p-4">
       <div className="mb-2 flex items-center justify-between">
-        <p className="font-medium text-black dark:text-zinc-50">{vehicle.name}</p>
+        <p className="font-medium text-foreground">{vehicle.name}</p>
         {!driverId && (frontOccupants.length > 0 || backOccupants.length > 0) && (
           <p className="text-xs text-amber-600 dark:text-amber-400">Fahrer fehlt</p>
         )}
       </div>
 
-      <p className="mb-1 text-xs text-zinc-500 dark:text-zinc-400">
-        Vorne ({frontOccupants.length}/{vehicle.frontSeats})
-      </p>
-      <SeatRowArea
-        vehicleId={vehicle.id}
-        row="FRONT"
-        capacity={vehicle.frontSeats}
-        occupants={frontOccupants}
-        driverId={driverId}
-        onAreaClick={onFrontTap}
-        onOccupantClick={onOccupantClick}
-        onDriverToggle={onDriverToggle}
-      />
+      <div className="flex flex-wrap items-start gap-3">
+        <SeatCluster
+          label="Vorne"
+          vehicleId={vehicle.id}
+          row="FRONT"
+          capacity={vehicle.frontSeats}
+          occupants={frontOccupants}
+          driverId={driverId}
+          draggingChip={draggingChip}
+          draggingPerson={draggingPerson}
+          onAreaClick={onFrontTap}
+          onOccupantClick={onOccupantClick}
+          onDriverToggle={onDriverToggle}
+        />
 
-      <p className="mb-1 mt-2 text-xs text-zinc-500 dark:text-zinc-400">
-        Hinten ({backOccupants.length}/{vehicle.seats - vehicle.frontSeats})
-      </p>
-      <SeatRowArea
-        vehicleId={vehicle.id}
-        row="BACK"
-        capacity={vehicle.seats - vehicle.frontSeats}
-        occupants={backOccupants}
-        onAreaClick={onBackTap}
-        onOccupantClick={onOccupantClick}
-        onDriverToggle={() => {}}
-      />
+        <div className="mt-4 h-11 w-px bg-[var(--border)]" />
 
-      {vehicle.hasTowHitch && (
-        <div className="mt-3 border-t border-black/5 pt-3 dark:border-white/5">
-          <p className="mb-1 text-xs text-zinc-500 dark:text-zinc-400">Anhänger</p>
-          <div
-            ref={setHitchRef}
-            onClick={onHitchTap}
-            className={`flex min-h-[56px] items-center gap-2 rounded-lg p-2 transition-colors ${
-              isOverHitch ? "bg-black/[.04] dark:bg-white/[.08]" : ""
-            }`}
-          >
-            {attachedTrailer ? (
-              <Chip
-                chip={{ type: "trailer", id: attachedTrailer.id, name: attachedTrailer.name }}
-                selected={false}
-                onClick={() => onDetachTrailer(attachedTrailer.id)}
-              />
-            ) : (
-              <span className="text-xs text-zinc-400 dark:text-zinc-600">Kupplung frei</span>
-            )}
-          </div>
-        </div>
-      )}
+        <SeatCluster
+          label="Hinten"
+          vehicleId={vehicle.id}
+          row="BACK"
+          capacity={vehicle.seats - vehicle.frontSeats}
+          occupants={backOccupants}
+          draggingChip={draggingChip}
+          draggingPerson={draggingPerson}
+          onAreaClick={onBackTap}
+          onOccupantClick={onOccupantClick}
+          onDriverToggle={() => {}}
+        />
+
+        {vehicle.hasTowHitch && (
+          <>
+            <div className="mt-4 h-11 w-px bg-[var(--border)]" />
+            <div className="flex flex-col gap-1">
+              <p className="text-[11px] text-zinc-500 dark:text-zinc-400">Kupplung</p>
+              <div
+                ref={setHitchRef}
+                onClick={onHitchTap}
+                className={`flex rounded-lg p-1 transition-colors ${
+                  hitchReject ? "bg-red-500/10 ring-1 ring-red-400/60" : isOverHitch ? "bg-accent/10" : ""
+                }`}
+              >
+                {attachedTrailer ? (
+                  <Chip
+                    size={SLOT_SIZE}
+                    chip={{ type: "trailer", id: attachedTrailer.id, name: attachedTrailer.name }}
+                    selected={false}
+                    onClick={() => onDetachTrailer(attachedTrailer.id)}
+                  />
+                ) : (
+                  <EmptySlot icon={<IconLink size={20} stroke={1.75} />} />
+                )}
+              </div>
+            </div>
+          </>
+        )}
+      </div>
 
       {attachedTrailer?.type === "BIKE_RACK" && (
-        <div className="mt-3 border-t border-black/5 pt-3 dark:border-white/5">
-          <p className="mb-1 text-xs text-zinc-500 dark:text-zinc-400">
+        <div className="pop-in mt-3 border-t border-[var(--border)] pt-3">
+          <p className="mb-1 text-[11px] text-zinc-500 dark:text-zinc-400">
             Fahrräder ({bikesOnAttached.length}/{attachedTrailer.capacity ?? 0})
           </p>
           <div
             ref={setBikeSlotsRef}
             onClick={onBikeSlotTap}
-            className={`flex flex-wrap gap-2 rounded-lg p-2 transition-colors ${
-              isOverBikeSlots ? "bg-black/[.04] dark:bg-white/[.08]" : ""
+            className={`flex flex-wrap gap-1.5 rounded-lg p-1 transition-colors ${
+              bikeSlotsReject ? "bg-red-500/10 ring-1 ring-red-400/60" : isOverBikeSlots ? "bg-accent/10" : ""
             }`}
           >
             {Array.from({ length: attachedTrailer.capacity ?? 0 }).map((_, i) => {
@@ -367,6 +431,7 @@ function VehicleBlock({
               return bikeOwner ? (
                 <Chip
                   key={bikeOwner.id}
+                  size={SLOT_SIZE}
                   chip={{ type: "bike", id: bikeOwner.id, name: bikeOwner.name }}
                   selected={false}
                   onClick={() => onUnassignBike(bikeOwner.id)}
@@ -390,9 +455,17 @@ function VehicleBlock({
   );
 }
 
+const TABS = [
+  { key: "person", label: "Personen" },
+  { key: "bike", label: "Fahrräder" },
+  { key: "trailer", label: "Hänger" },
+] as const;
+type TabKey = (typeof TABS)[number]["key"];
+
 function VariantEditorInner({
   shareToken,
   tripId,
+  isAdminView,
   participants,
   vehicles,
   trailers,
@@ -401,6 +474,7 @@ function VariantEditorInner({
 }: {
   shareToken: string;
   tripId: string;
+  isAdminView?: boolean;
   participants: Participant[];
   vehicles: Vehicle[];
   trailers: Trailer[];
@@ -415,6 +489,8 @@ function VariantEditorInner({
   const [departureByVehicle, setDepartureByVehicle] = useState<Record<string, string>>({});
   const [travelTimeOverrideByVehicle, setTravelTimeOverrideByVehicle] = useState<Record<string, number>>({});
   const [selected, setSelected] = useState<{ type: ChipData["type"]; id: string } | null>(null);
+  const [draggingChip, setDraggingChip] = useState<ChipData | null>(null);
+  const [activeTab, setActiveTab] = useState<TabKey>("person");
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -433,6 +509,8 @@ function VariantEditorInner({
     const vehicle = vehicles.find((v) => v.id === vehicleId);
     if (!person || !vehicle) return;
     if (row === "FRONT" && person.backSeatOnly) return;
+    // the first front occupant sits in the driver's seat and must be able to drive
+    if (row === "FRONT" && countInRow(vehicleId, "FRONT", participantId) === 0 && !person.canDrive) return;
 
     const capacity = row === "FRONT" ? vehicle.frontSeats : vehicle.seats - vehicle.frontSeats;
     if (countInRow(vehicleId, row, participantId) >= capacity) return;
@@ -543,7 +621,13 @@ function VariantEditorInner({
     });
   }
 
+  function handleDragStart(event: DragStartEvent) {
+    const chip = event.active.data.current as ChipData | undefined;
+    setDraggingChip(chip ?? null);
+  }
+
   function handleDragEnd(event: DragEndEvent) {
+    setDraggingChip(null);
     const { active, over } = event;
     if (!over) return;
     const [type, id] = String(active.id).split(":") as [ChipData["type"], string];
@@ -590,6 +674,8 @@ function VariantEditorInner({
 
   const { setNodeRef: setTrayRef, isOver: isOverTray } = useDroppable({ id: "tray" });
 
+  const draggingPerson = draggingChip?.type === "person" ? participants.find((p) => p.id === draggingChip.id) ?? null : null;
+
   const unassignedPeople: ChipData[] = participants
     .filter((p) => !personAssignment[p.id])
     .map((p) => ({ type: "person", id: p.id, name: p.name, photoUrl: p.photoUrl }));
@@ -599,6 +685,17 @@ function VariantEditorInner({
   const unassignedTrailers: ChipData[] = trailers
     .filter((t) => !trailerAssignment[t.id])
     .map((t) => ({ type: "trailer", id: t.id, name: t.name }));
+
+  const tabCounts: Record<TabKey, number> = {
+    person: unassignedPeople.length,
+    bike: unassignedBikes.length,
+    trailer: unassignedTrailers.length,
+  };
+  const tabItems: Record<TabKey, ChipData[]> = {
+    person: unassignedPeople,
+    bike: unassignedBikes,
+    trailer: unassignedTrailers,
+  };
 
   const allPeopleAssigned = participants.every((p) => personAssignment[p.id]);
   const allBikesAssigned = bikeOwners.every((p) => bikeAssignment[p.id]);
@@ -640,18 +737,36 @@ function VariantEditorInner({
   }
 
   return (
-    <DndContext sensors={sensors} onDragEnd={handleDragEnd}>
-      <div className="flex flex-1 flex-col bg-zinc-50 dark:bg-black">
-        <header className="border-b border-black/10 bg-white px-6 py-4 dark:border-white/10 dark:bg-zinc-950">
-          <input
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            placeholder="Name der Variante (z.B. 'Vorschlag Sebastian')"
-            className="w-full rounded border border-black/10 px-3 py-2 text-sm dark:border-white/10 dark:bg-zinc-900"
-          />
+    <DndContext sensors={sensors} onDragStart={handleDragStart} onDragEnd={handleDragEnd} onDragCancel={() => setDraggingChip(null)}>
+      <div className="flex flex-1 flex-col bg-background">
+        <header className="sticky top-0 z-10 border-b border-[var(--border)] bg-[var(--surface)] px-6 py-3">
+          {isAdminView && (
+            <Link
+              href={`/trips/${tripId}`}
+              className="mb-1 inline-block text-xs font-medium text-accent hover:underline"
+            >
+              ← Zurück zum Admin-Bereich
+            </Link>
+          )}
+          <div className="flex items-center gap-2">
+            <input
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              placeholder="Name der Variante (z.B. 'Vorschlag Sebastian')"
+              className="w-full flex-1 rounded border border-[var(--border)] px-3 py-2 text-sm dark:bg-[var(--surface)]"
+            />
+            <button
+              disabled={!isComplete || saving}
+              onClick={handleSave}
+              className="shrink-0 rounded-full bg-accent px-5 py-2 text-sm font-medium text-accent-foreground disabled:opacity-40 hover:brightness-110"
+            >
+              {saving ? "Speichern…" : "Speichern"}
+            </button>
+          </div>
+          {error && <p className="mt-2 text-sm text-red-600 dark:text-red-400">{error}</p>}
         </header>
 
-        <main className="mx-auto w-full max-w-2xl flex-1 overflow-y-auto px-6 py-6 pb-44">
+        <main className="mx-auto w-full max-w-2xl flex-1 overflow-y-auto px-6 py-6 pb-40">
           <div className="flex flex-col gap-4">
             {vehicles.map((vehicle) => {
               const frontOccupants = participants
@@ -685,6 +800,8 @@ function VariantEditorInner({
                   defaultTravelMinutes={defaultTravelMinutes}
                   departure={departureByVehicle[vehicle.id]}
                   travelTimeOverride={travelTimeOverrideByVehicle[vehicle.id]}
+                  draggingChip={draggingChip}
+                  draggingPerson={draggingPerson}
                   onFrontTap={() => handleAreaTap("front", vehicle.id)}
                   onBackTap={() => handleAreaTap("back", vehicle.id)}
                   onHitchTap={() => handleAreaTap("hitch", vehicle.id)}
@@ -706,19 +823,32 @@ function VariantEditorInner({
                 </p>
               )}
           </div>
-
-          {error && <p className="mt-4 text-sm text-red-600 dark:text-red-400">{error}</p>}
         </main>
 
         <div
           ref={setTrayRef}
-          className={`fixed inset-x-0 bottom-0 border-t bg-white px-4 py-3 dark:bg-zinc-950 ${
-            isOverTray ? "border-black dark:border-white" : "border-black/10 dark:border-white/10"
+          className={`fixed inset-x-0 bottom-0 border-t bg-[var(--surface)] px-4 pb-3 pt-2 ${
+            isOverTray ? "border-accent" : "border-[var(--border)]"
           }`}
         >
-          <div className="mx-auto flex max-w-2xl items-center gap-4">
-            <div className="flex flex-1 gap-2 overflow-x-auto py-1">
-              {[...unassignedPeople, ...unassignedBikes, ...unassignedTrailers].map((chip) => (
+          <div className="mx-auto max-w-2xl">
+            <div className="mb-1.5 flex gap-1">
+              {TABS.map((tab) => (
+                <button
+                  key={tab.key}
+                  onClick={() => setActiveTab(tab.key)}
+                  className={`rounded-full px-3 py-1 text-xs font-medium transition-colors ${
+                    activeTab === tab.key
+                      ? "bg-accent text-accent-foreground"
+                      : "text-zinc-500 hover:text-foreground dark:text-zinc-400"
+                  }`}
+                >
+                  {tab.label} ({tabCounts[tab.key]})
+                </button>
+              ))}
+            </div>
+            <div className="flex gap-2 overflow-x-auto py-1">
+              {tabItems[activeTab].map((chip) => (
                 <Chip
                   key={`${chip.type}:${chip.id}`}
                   chip={chip}
@@ -726,19 +856,14 @@ function VariantEditorInner({
                   onClick={() => handleTrayChipClick(chip)}
                 />
               ))}
-              {unassignedPeople.length + unassignedBikes.length + unassignedTrailers.length === 0 && (
+              {tabItems[activeTab].length === 0 && (
                 <p className="whitespace-nowrap text-sm text-zinc-400 dark:text-zinc-600">
-                  Alles zugeordnet 🎉
+                  {unassignedPeople.length + unassignedBikes.length + unassignedTrailers.length === 0
+                    ? "Alles zugeordnet 🎉"
+                    : "Nichts mehr offen in dieser Kategorie"}
                 </p>
               )}
             </div>
-            <button
-              disabled={!isComplete || saving}
-              onClick={handleSave}
-              className="shrink-0 rounded-full bg-foreground px-5 py-2 text-sm font-medium text-background disabled:opacity-40 hover:bg-[#383838] dark:hover:bg-[#ccc]"
-            >
-              {saving ? "Speichern…" : "Speichern"}
-            </button>
           </div>
         </div>
       </div>
@@ -749,6 +874,7 @@ function VariantEditorInner({
 export function VariantEditor({
   shareToken,
   tripId,
+  isAdminView,
   participants,
   vehicles,
   trailers,
@@ -756,25 +882,39 @@ export function VariantEditor({
 }: {
   shareToken: string;
   tripId: string;
+  isAdminView?: boolean;
   participants: Participant[];
   vehicles: Vehicle[];
   trailers: Trailer[];
   tripTravelTimes: TripTravelTimes;
 }) {
   const router = useRouter();
-  const [me] = useState(() => getStoredParticipant(shareToken));
+  // localStorage isn't available during SSR, so `me` starts null on both server
+  // and the first client render (avoiding a hydration mismatch) and is filled
+  // in after mount; `checked` distinguishes "still loading" from "no participant".
+  const [{ me, checked }, setParticipantState] = useState<{
+    me: { id: string; name: string } | null;
+    checked: boolean;
+  }>({ me: null, checked: false });
+
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- deliberate post-mount localStorage read, see comment above
+    setParticipantState({ me: getStoredParticipant(shareToken), checked: true });
+  }, [shareToken]);
+
   const isValidParticipant = me !== null && participants.some((p) => p.id === me.id);
 
   useEffect(() => {
-    if (!isValidParticipant) router.replace(`/t/${shareToken}`);
-  }, [isValidParticipant, shareToken, router]);
+    if (checked && !isValidParticipant) router.replace(`/t/${shareToken}`);
+  }, [checked, isValidParticipant, shareToken, router]);
 
-  if (!isValidParticipant || !me) return null;
+  if (!checked || !isValidParticipant || !me) return null;
 
   return (
     <VariantEditorInner
       shareToken={shareToken}
       tripId={tripId}
+      isAdminView={isAdminView}
       participants={participants}
       vehicles={vehicles}
       trailers={trailers}

@@ -19,7 +19,7 @@ export default async function NewTripPage() {
     <div className="flex flex-1 flex-col">
       <AdminNav email={user.email ?? ""} />
       <main className="mx-auto w-full max-w-2xl flex-1 px-6 py-10">
-        <h1 className="mb-6 text-2xl font-semibold text-black dark:text-zinc-50">
+        <h1 className="mb-6 text-2xl font-semibold text-foreground">
           Neue Reise
         </h1>
 
@@ -44,31 +44,21 @@ export default async function NewTripPage() {
               name="name"
               required
               placeholder="z.B. Sommerurlaub Ostsee"
-              className="rounded border border-black/10 px-3 py-2 dark:border-white/10 dark:bg-zinc-900"
+              className="rounded border border-[var(--border)] px-3 py-2 dark:bg-[var(--surface)]"
             />
           </label>
 
-          <div className="flex gap-4">
-            <label className="flex flex-1 flex-col gap-1 text-sm text-zinc-700 dark:text-zinc-300">
-              Start
-              <input
-                name="startDate"
-                type="date"
-                className="rounded border border-black/10 px-3 py-2 dark:border-white/10 dark:bg-zinc-900"
-              />
-            </label>
-            <label className="flex flex-1 flex-col gap-1 text-sm text-zinc-700 dark:text-zinc-300">
-              Ende
-              <input
-                name="endDate"
-                type="date"
-                className="rounded border border-black/10 px-3 py-2 dark:border-white/10 dark:bg-zinc-900"
-              />
-            </label>
-          </div>
+          <label className="flex max-w-[200px] flex-col gap-1 text-sm text-zinc-700 dark:text-zinc-300">
+            Datum
+            <input
+              name="date"
+              type="date"
+              className="rounded border border-[var(--border)] px-3 py-2 dark:bg-[var(--surface)]"
+            />
+          </label>
 
           <fieldset>
-            <legend className="mb-2 text-sm font-medium text-black dark:text-zinc-50">
+            <legend className="mb-2 text-sm font-medium text-foreground">
               Fahrzeiten für diese Reise
             </legend>
             <div className="flex flex-wrap gap-4">
@@ -78,7 +68,7 @@ export default async function NewTripPage() {
                   name="travelTimeMinutes"
                   type="number"
                   min={0}
-                  className="w-32 rounded border border-black/10 px-3 py-2 dark:border-white/10 dark:bg-zinc-900"
+                  className="w-32 rounded border border-[var(--border)] px-3 py-2 dark:bg-[var(--surface)]"
                 />
               </label>
               <label className="flex flex-col gap-1 text-sm text-zinc-700 dark:text-zinc-300">
@@ -87,7 +77,7 @@ export default async function NewTripPage() {
                   name="travelTimeWithBikeTrailerMinutes"
                   type="number"
                   min={0}
-                  className="w-32 rounded border border-black/10 px-3 py-2 dark:border-white/10 dark:bg-zinc-900"
+                  className="w-32 rounded border border-[var(--border)] px-3 py-2 dark:bg-[var(--surface)]"
                 />
               </label>
               <label className="flex flex-col gap-1 text-sm text-zinc-700 dark:text-zinc-300">
@@ -96,21 +86,21 @@ export default async function NewTripPage() {
                   name="travelTimeWithCargoTrailerMinutes"
                   type="number"
                   min={0}
-                  className="w-32 rounded border border-black/10 px-3 py-2 dark:border-white/10 dark:bg-zinc-900"
+                  className="w-32 rounded border border-[var(--border)] px-3 py-2 dark:bg-[var(--surface)]"
                 />
               </label>
             </div>
           </fieldset>
 
           <fieldset>
-            <legend className="mb-2 text-sm font-medium text-black dark:text-zinc-50">
+            <legend className="mb-2 text-sm font-medium text-foreground">
               Wer fährt mit?
             </legend>
             <div className="flex flex-col gap-2">
               {people.map((person) => (
                 <div
                   key={person.id}
-                  className="flex items-center justify-between rounded-lg border border-black/10 px-4 py-2 dark:border-white/10"
+                  className="flex items-center justify-between rounded-lg border border-[var(--border)] px-4 py-2"
                 >
                   <label className="flex items-center gap-2 text-sm text-zinc-700 dark:text-zinc-300">
                     <input
@@ -140,14 +130,14 @@ export default async function NewTripPage() {
           </fieldset>
 
           <fieldset>
-            <legend className="mb-2 text-sm font-medium text-black dark:text-zinc-50">
+            <legend className="mb-2 text-sm font-medium text-foreground">
               Welche Autos?
             </legend>
             <div className="flex flex-col gap-2">
               {vehicles.map((vehicle) => (
                 <label
                   key={vehicle.id}
-                  className="flex items-center gap-2 rounded-lg border border-black/10 px-4 py-2 text-sm text-zinc-700 dark:border-white/10 dark:text-zinc-300"
+                  className="flex items-center gap-2 rounded-lg border border-[var(--border)] px-4 py-2 text-sm text-zinc-700 dark:text-zinc-300"
                 >
                   <input
                     type="checkbox"
@@ -168,14 +158,14 @@ export default async function NewTripPage() {
 
           {trailers.length > 0 && (
             <fieldset>
-              <legend className="mb-2 text-sm font-medium text-black dark:text-zinc-50">
+              <legend className="mb-2 text-sm font-medium text-foreground">
                 Welche Anhänger?
               </legend>
               <div className="flex flex-col gap-2">
                 {trailers.map((trailer) => (
                   <label
                     key={trailer.id}
-                    className="flex items-center gap-2 rounded-lg border border-black/10 px-4 py-2 text-sm text-zinc-700 dark:border-white/10 dark:text-zinc-300"
+                    className="flex items-center gap-2 rounded-lg border border-[var(--border)] px-4 py-2 text-sm text-zinc-700 dark:text-zinc-300"
                   >
                     <input
                       type="checkbox"
@@ -190,7 +180,7 @@ export default async function NewTripPage() {
             </fieldset>
           )}
 
-          <button className="self-start rounded-full bg-foreground px-6 py-2 text-sm font-medium text-background hover:bg-[#383838] dark:hover:bg-[#ccc]">
+          <button className="self-start rounded-full bg-accent px-6 py-2 text-sm font-medium text-accent-foreground hover:brightness-110">
             Reise anlegen
           </button>
         </form>
