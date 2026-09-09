@@ -5,6 +5,7 @@ import { requireAdmin } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { AdminNav } from "@/components/AdminNav";
 import { CopyLinkButton } from "@/components/CopyLinkButton";
+import { updateTripTravelTimes } from "../actions";
 
 export default async function TripDetailPage({
   params,
@@ -95,6 +96,50 @@ export default async function TripDetailPage({
               </li>
             ))}
           </ul>
+        </section>
+
+        <section className="mb-8">
+          <h2 className="mb-2 text-lg font-medium text-black dark:text-zinc-50">
+            Fahrzeiten
+          </h2>
+          <form
+            action={updateTripTravelTimes.bind(null, trip.id)}
+            className="flex flex-wrap items-end gap-4 rounded-xl border border-black/10 p-4 dark:border-white/10"
+          >
+            <label className="flex flex-col gap-1 text-sm text-zinc-700 dark:text-zinc-300">
+              Ohne Anhänger (Min.)
+              <input
+                name="travelTimeMinutes"
+                type="number"
+                min={0}
+                defaultValue={trip.travelTimeMinutes ?? ""}
+                className="w-32 rounded border border-black/10 px-3 py-2 dark:border-white/10 dark:bg-zinc-900"
+              />
+            </label>
+            <label className="flex flex-col gap-1 text-sm text-zinc-700 dark:text-zinc-300">
+              Mit Fahrradanhänger (Min.)
+              <input
+                name="travelTimeWithBikeTrailerMinutes"
+                type="number"
+                min={0}
+                defaultValue={trip.travelTimeWithBikeTrailerMinutes ?? ""}
+                className="w-32 rounded border border-black/10 px-3 py-2 dark:border-white/10 dark:bg-zinc-900"
+              />
+            </label>
+            <label className="flex flex-col gap-1 text-sm text-zinc-700 dark:text-zinc-300">
+              Mit Lastenanhänger (Min.)
+              <input
+                name="travelTimeWithCargoTrailerMinutes"
+                type="number"
+                min={0}
+                defaultValue={trip.travelTimeWithCargoTrailerMinutes ?? ""}
+                className="w-32 rounded border border-black/10 px-3 py-2 dark:border-white/10 dark:bg-zinc-900"
+              />
+            </label>
+            <button className="rounded-full border border-black/10 px-4 py-2 text-sm font-medium hover:bg-black/[.04] dark:border-white/10 dark:hover:bg-[#1a1a1a]">
+              Speichern
+            </button>
+          </form>
         </section>
 
         <section>

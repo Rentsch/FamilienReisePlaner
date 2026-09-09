@@ -14,6 +14,7 @@ export type SaveVariantInput = {
   driverByVehicle: Record<string, string>; // tripVehicleId -> participantId
   bikeAssignment: Record<string, string>; // participantId -> tripTrailerId
   trailerAssignment: Record<string, string>; // tripTrailerId -> tripVehicleId
+  vehiclePlan: Record<string, { departureTime?: string; travelTimeOverrideMinutes?: number }>; // tripVehicleId -> plan
 };
 
 export async function saveVariant(input: SaveVariantInput) {
@@ -41,6 +42,13 @@ export async function saveVariant(input: SaveVariantInput) {
         create: Object.entries(input.trailerAssignment).map(
           ([tripTrailerId, tripVehicleId]) => ({ tripTrailerId, tripVehicleId }),
         ),
+      },
+      vehiclePlans: {
+        create: Object.entries(input.vehiclePlan).map(([tripVehicleId, plan]) => ({
+          tripVehicleId,
+          departureTime: plan.departureTime ? new Date(`1970-01-01T${plan.departureTime}:00`) : undefined,
+          travelTimeOverrideMinutes: plan.travelTimeOverrideMinutes,
+        })),
       },
     },
   });

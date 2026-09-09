@@ -69,6 +69,41 @@ export default async function NewTripPage() {
 
           <fieldset>
             <legend className="mb-2 text-sm font-medium text-black dark:text-zinc-50">
+              Fahrzeiten für diese Reise
+            </legend>
+            <div className="flex flex-wrap gap-4">
+              <label className="flex flex-col gap-1 text-sm text-zinc-700 dark:text-zinc-300">
+                Ohne Anhänger (Min.)
+                <input
+                  name="travelTimeMinutes"
+                  type="number"
+                  min={0}
+                  className="w-32 rounded border border-black/10 px-3 py-2 dark:border-white/10 dark:bg-zinc-900"
+                />
+              </label>
+              <label className="flex flex-col gap-1 text-sm text-zinc-700 dark:text-zinc-300">
+                Mit Fahrradanhänger (Min.)
+                <input
+                  name="travelTimeWithBikeTrailerMinutes"
+                  type="number"
+                  min={0}
+                  className="w-32 rounded border border-black/10 px-3 py-2 dark:border-white/10 dark:bg-zinc-900"
+                />
+              </label>
+              <label className="flex flex-col gap-1 text-sm text-zinc-700 dark:text-zinc-300">
+                Mit Lastenanhänger (Min.)
+                <input
+                  name="travelTimeWithCargoTrailerMinutes"
+                  type="number"
+                  min={0}
+                  className="w-32 rounded border border-black/10 px-3 py-2 dark:border-white/10 dark:bg-zinc-900"
+                />
+              </label>
+            </div>
+          </fieldset>
+
+          <fieldset>
+            <legend className="mb-2 text-sm font-medium text-black dark:text-zinc-50">
               Wer fährt mit?
             </legend>
             <div className="flex flex-col gap-2">

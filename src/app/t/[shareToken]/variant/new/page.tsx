@@ -45,6 +45,11 @@ export default async function NewVariantPage({
         type: t.trailer.type,
         capacity: t.trailer.capacity,
       }))}
+      tripTravelTimes={{
+        default: trip.travelTimeMinutes,
+        bikeTrailer: trip.travelTimeWithBikeTrailerMinutes,
+        cargoTrailer: trip.travelTimeWithCargoTrailerMinutes,
+      }}
     />
   );
 }

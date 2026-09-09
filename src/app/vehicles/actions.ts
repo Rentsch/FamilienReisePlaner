@@ -5,11 +5,6 @@ import { redirect } from "next/navigation";
 import { requireAdmin } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 
-function num(formData: FormData, key: string) {
-  const v = formData.get(key) as string;
-  return v ? Number(v) : undefined;
-}
-
 function vehicleData(formData: FormData) {
   const seats = Number(formData.get("seats"));
   const frontSeats = Math.min(Number(formData.get("frontSeats")), seats);
@@ -19,8 +14,6 @@ function vehicleData(formData: FormData) {
     seats,
     frontSeats,
     hasTowHitch: formData.get("hasTowHitch") === "on",
-    travelTimeMinutes: num(formData, "travelTimeMinutes"),
-    travelTimeWithTrailerMinutes: num(formData, "travelTimeWithTrailerMinutes"),
   };
 }
 

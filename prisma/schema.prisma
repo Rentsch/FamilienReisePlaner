@@ -36,14 +36,12 @@ model Person {
 }
 
 model Vehicle {
-  id                           String  @id @default(cuid())
-  adminUserId                  String
-  name                         String
-  seats                        Int
-  frontSeats                   Int     @default(2) // includes the driver's seat
-  hasTowHitch                  Boolean @default(false)
-  travelTimeMinutes            Int?
-  travelTimeWithTrailerMinutes Int?
+  id          String  @id @default(cuid())
+  adminUserId String
+  name        String
+  seats       Int
+  frontSeats  Int     @default(2) // includes the driver's seat
+  hasTowHitch Boolean @default(false)
 
   tripVehicles TripVehicle[]
 }
@@ -69,6 +67,11 @@ model Trip {
   shareToken  String    @unique @default(cuid())
   adminUserId String
   createdAt   DateTime  @default(now())
+
+  // Travel time for this trip's route, depending on what's being towed.
+  travelTimeMinutes                 Int?
+  travelTimeWithBikeTrailerMinutes  Int?
+  travelTimeWithCargoTrailerMinutes Int?
 
   participants TripParticipant[]
   tripVehicles TripVehicle[]

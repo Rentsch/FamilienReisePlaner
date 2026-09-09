@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
+import { addMinutesToTime } from "@/lib/time";
 import { VariantDetail } from "@/components/VariantDetail";
 
 export default async function VariantDetailPage({
@@ -29,9 +30,14 @@ export default async function VariantDetailPage({
       trailerAssignments: {
         include: { tripTrailer: { include: { trailer: true } } },
       },
+      vehiclePlans: true,
     },
   });
   if (!variant || variant.tripId !== trip.id) notFound();
+
+  function formatTime(date: Date) {
+    return `${String(date.getUTCHours()).padStart(2, "0")}:${String(date.getUTCMinutes()).padStart(2, "0")}`;
+  }
 
   const usedVehicleIds = new Set(variant.personAssignments.map((pa) => pa.tripVehicleId));
 
@@ -44,6 +50,19 @@ export default async function VariantDetailPage({
     const bikesOnTrailer = attachedTrailerId
       ? variant.bikeAssignments.filter((ba) => ba.tripTrailerId === attachedTrailerId)
       : [];
+
+    const trailerType = attachedTrailerAssignment?.tripTrailer.trailer.type;
+    const defaultMinutes = !trailerType
+      ? trip.travelTimeMinutes
+      : trailerType === "BIKE_RACK"
+        ? trip.travelTimeWithBikeTrailerMinutes
+        : trip.travelTimeWithCargoTrailerMinutes;
+
+    const plan = variant.vehiclePlans.find((p) => p.tripVehicleId === vehicleId);
+    const effectiveMinutes = plan?.travelTimeOverrideMinutes ?? defaultMinutes ?? null;
+    const departure = plan?.departureTime ? formatTime(plan.departureTime) : null;
+    const arrival =
+      departure && effectiveMinutes != null ? addMinutesToTime(departure, effectiveMinutes) : null;
 
     return {
       id: vehicleId,
@@ -63,6 +82,8 @@ export default async function VariantDetailPage({
         .map((pa) => ({ name: pa.tripParticipant.person.name, photoUrl: pa.tripParticipant.person.photoUrl })),
       trailerName: attachedTrailerAssignment?.tripTrailer.trailer.name ?? null,
       bikes: bikesOnTrailer.map((ba) => ba.tripParticipant.person.name),
+      departure,
+      arrival: arrival ? `${arrival.time}${arrival.nextDay ? " (+1 Tag)" : ""}` : null,
     };
   });
 

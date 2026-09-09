@@ -53,24 +53,6 @@ export default async function VehiclesPage() {
               className="w-24 rounded border border-black/10 px-3 py-2 dark:border-white/10 dark:bg-zinc-900"
             />
           </label>
-          <label className="flex flex-col gap-1 text-sm text-zinc-700 dark:text-zinc-300">
-            Fahrzeit (Min.)
-            <input
-              name="travelTimeMinutes"
-              type="number"
-              min={0}
-              className="w-28 rounded border border-black/10 px-3 py-2 dark:border-white/10 dark:bg-zinc-900"
-            />
-          </label>
-          <label className="flex flex-col gap-1 text-sm text-zinc-700 dark:text-zinc-300">
-            Fahrzeit mit Anhänger (Min.)
-            <input
-              name="travelTimeWithTrailerMinutes"
-              type="number"
-              min={0}
-              className="w-32 rounded border border-black/10 px-3 py-2 dark:border-white/10 dark:bg-zinc-900"
-            />
-          </label>
           <label className="flex items-center gap-2 pb-2 text-sm text-zinc-700 dark:text-zinc-300">
             <input type="checkbox" name="hasTowHitch" className="h-4 w-4" />
             Anhängerkupplung
@@ -93,8 +75,6 @@ export default async function VehiclesPage() {
                 <p className="text-xs text-zinc-500 dark:text-zinc-400">
                   {vehicle.frontSeats} vorne / {vehicle.seats - vehicle.frontSeats} hinten
                   {vehicle.hasTowHitch && " · Anhängerkupplung"}
-                  {vehicle.travelTimeMinutes != null &&
-                    ` · ${vehicle.travelTimeMinutes} Min.`}
                 </p>
               </div>
               <Link

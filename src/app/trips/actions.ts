@@ -5,6 +5,11 @@ import { revalidatePath } from "next/cache";
 import { requireAdmin } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 
+function num(formData: FormData, key: string) {
+  const v = formData.get(key) as string;
+  return v ? Number(v) : undefined;
+}
+
 export async function createTrip(formData: FormData) {
   const user = await requireAdmin();
 
@@ -24,6 +29,9 @@ export async function createTrip(formData: FormData) {
       description,
       startDate: startDate ? new Date(startDate) : undefined,
       endDate: endDate ? new Date(endDate) : undefined,
+      travelTimeMinutes: num(formData, "travelTimeMinutes"),
+      travelTimeWithBikeTrailerMinutes: num(formData, "travelTimeWithBikeTrailerMinutes"),
+      travelTimeWithCargoTrailerMinutes: num(formData, "travelTimeWithCargoTrailerMinutes"),
       participants: {
         create: personIds.map((personId) => ({
           personId,
@@ -40,6 +48,21 @@ export async function createTrip(formData: FormData) {
   });
 
   redirect(`/trips/${trip.id}`);
+}
+
+export async function updateTripTravelTimes(id: string, formData: FormData) {
+  const user = await requireAdmin();
+
+  await prisma.trip.update({
+    where: { id, adminUserId: user.id },
+    data: {
+      travelTimeMinutes: num(formData, "travelTimeMinutes"),
+      travelTimeWithBikeTrailerMinutes: num(formData, "travelTimeWithBikeTrailerMinutes"),
+      travelTimeWithCargoTrailerMinutes: num(formData, "travelTimeWithCargoTrailerMinutes"),
+    },
+  });
+
+  revalidatePath(`/trips/${id}`);
 }
 
 export async function deleteTrip(id: string) {

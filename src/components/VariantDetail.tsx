@@ -16,6 +16,8 @@ type VehicleView = {
   back: { name: string; photoUrl: string | null }[];
   trailerName: string | null;
   bikes: string[];
+  departure: string | null;
+  arrival: string | null;
 };
 
 export function VariantDetail({
@@ -122,6 +124,13 @@ export function VariantDetail({
                   {v.trailerName && (
                     <span className="text-sm text-zinc-500 dark:text-zinc-400">🚚 {v.trailerName}</span>
                   )}
+                </div>
+              )}
+
+              {(v.departure || v.arrival) && (
+                <div className="mt-2 flex gap-4 border-t border-black/5 pt-2 text-xs text-zinc-500 dark:border-white/5 dark:text-zinc-400">
+                  {v.departure && <span>Abfahrt {v.departure}</span>}
+                  {v.arrival && <span>Ankunft ca. {v.arrival}</span>}
                 </div>
               )}
             </div>

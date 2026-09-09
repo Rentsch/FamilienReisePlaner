@@ -63,28 +63,6 @@ export default async function EditVehiclePage({
             />
           </label>
 
-          <label className="flex flex-col gap-1 text-sm text-zinc-700 dark:text-zinc-300">
-            Fahrzeit (Min.)
-            <input
-              name="travelTimeMinutes"
-              type="number"
-              min={0}
-              defaultValue={vehicle.travelTimeMinutes ?? ""}
-              className="rounded border border-black/10 px-3 py-2 dark:border-white/10 dark:bg-zinc-900"
-            />
-          </label>
-
-          <label className="flex flex-col gap-1 text-sm text-zinc-700 dark:text-zinc-300">
-            Fahrzeit mit Anhänger (Min.)
-            <input
-              name="travelTimeWithTrailerMinutes"
-              type="number"
-              min={0}
-              defaultValue={vehicle.travelTimeWithTrailerMinutes ?? ""}
-              className="rounded border border-black/10 px-3 py-2 dark:border-white/10 dark:bg-zinc-900"
-            />
-          </label>
-
           <label className="flex items-center gap-2 text-sm text-zinc-700 dark:text-zinc-300">
             <input
               type="checkbox"

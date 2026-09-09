@@ -13,6 +13,7 @@ import {
 } from "@dnd-kit/core";
 import { CSS } from "@dnd-kit/utilities";
 import { getStoredParticipant } from "@/lib/participant";
+import { addMinutesToTime } from "@/lib/time";
 import { saveVariant, type SeatRow } from "@/app/t/[shareToken]/variant/actions";
 
 type Participant = {
@@ -25,6 +26,7 @@ type Participant = {
 };
 type Vehicle = { id: string; name: string; seats: number; frontSeats: number; hasTowHitch: boolean };
 type Trailer = { id: string; name: string; type: "CARGO" | "BIKE_RACK"; capacity: number | null };
+type TripTravelTimes = { default: number | null; bikeTrailer: number | null; cargoTrailer: number | null };
 
 type ChipData =
   | { type: "person"; id: string; name: string; photoUrl: string | null }
@@ -190,6 +192,57 @@ function SeatRowArea({
   );
 }
 
+function TravelPlanRow({
+  defaultMinutes,
+  departure,
+  overrideMinutes,
+  onDepartureChange,
+  onOverrideChange,
+}: {
+  defaultMinutes: number | null;
+  departure: string | undefined;
+  overrideMinutes: number | undefined;
+  onDepartureChange: (value: string) => void;
+  onOverrideChange: (value: number | undefined) => void;
+}) {
+  const effectiveMinutes = overrideMinutes ?? defaultMinutes ?? undefined;
+  const arrival = departure && effectiveMinutes != null ? addMinutesToTime(departure, effectiveMinutes) : null;
+
+  return (
+    <div className="mt-3 flex flex-wrap items-end gap-3 border-t border-black/5 pt-3 dark:border-white/5">
+      <label className="flex flex-col gap-1 text-xs text-zinc-500 dark:text-zinc-400">
+        Abfahrt
+        <input
+          type="time"
+          value={departure ?? ""}
+          onChange={(e) => onDepartureChange(e.target.value)}
+          className="rounded border border-black/10 px-2 py-1 text-sm dark:border-white/10 dark:bg-zinc-900"
+        />
+      </label>
+      <label className="flex flex-col gap-1 text-xs text-zinc-500 dark:text-zinc-400">
+        Fahrzeit überschreiben (Min.)
+        <input
+          type="number"
+          min={0}
+          placeholder={defaultMinutes != null ? String(defaultMinutes) : "—"}
+          value={overrideMinutes ?? ""}
+          onChange={(e) => onOverrideChange(e.target.value ? Number(e.target.value) : undefined)}
+          className="w-32 rounded border border-black/10 px-2 py-1 text-sm dark:border-white/10 dark:bg-zinc-900"
+        />
+      </label>
+      {arrival && (
+        <p className="pb-1 text-xs text-zinc-500 dark:text-zinc-400">
+          Ankunft ca. {arrival.time}
+          {arrival.nextDay && " (+1 Tag)"}
+        </p>
+      )}
+      {effectiveMinutes == null && (
+        <p className="pb-1 text-xs text-amber-600 dark:text-amber-400">Keine Fahrzeit hinterlegt</p>
+      )}
+    </div>
+  );
+}
+
 function VehicleBlock({
   vehicle,
   frontOccupants,
@@ -197,6 +250,9 @@ function VehicleBlock({
   driverId,
   attachedTrailer,
   bikesOnAttached,
+  defaultTravelMinutes,
+  departure,
+  travelTimeOverride,
   onFrontTap,
   onBackTap,
   onHitchTap,
@@ -205,6 +261,8 @@ function VehicleBlock({
   onDriverToggle,
   onDetachTrailer,
   onUnassignBike,
+  onDepartureChange,
+  onTravelTimeOverrideChange,
 }: {
   vehicle: Vehicle;
   frontOccupants: { id: string; name: string; photoUrl: string | null; canDrive: boolean }[];
@@ -212,6 +270,9 @@ function VehicleBlock({
   driverId?: string;
   attachedTrailer: Trailer | null | undefined;
   bikesOnAttached: Participant[];
+  defaultTravelMinutes: number | null;
+  departure: string | undefined;
+  travelTimeOverride: number | undefined;
   onFrontTap: () => void;
   onBackTap: () => void;
   onHitchTap: () => void;
@@ -220,6 +281,8 @@ function VehicleBlock({
   onDriverToggle: (participantId: string) => void;
   onDetachTrailer: (trailerId: string) => void;
   onUnassignBike: (participantId: string) => void;
+  onDepartureChange: (value: string) => void;
+  onTravelTimeOverrideChange: (value: number | undefined) => void;
 }) {
   const { setNodeRef: setHitchRef, isOver: isOverHitch } = useDroppable({
     id: `vehicle:${vehicle.id}:hitch`,
@@ -315,6 +378,14 @@ function VehicleBlock({
           </div>
         </div>
       )}
+
+      <TravelPlanRow
+        defaultMinutes={defaultTravelMinutes}
+        departure={departure}
+        overrideMinutes={travelTimeOverride}
+        onDepartureChange={onDepartureChange}
+        onOverrideChange={onTravelTimeOverrideChange}
+      />
     </div>
   );
 }
@@ -325,6 +396,7 @@ function VariantEditorInner({
   participants,
   vehicles,
   trailers,
+  tripTravelTimes,
   me,
 }: {
   shareToken: string;
@@ -332,6 +404,7 @@ function VariantEditorInner({
   participants: Participant[];
   vehicles: Vehicle[];
   trailers: Trailer[];
+  tripTravelTimes: TripTravelTimes;
   me: { id: string; name: string };
 }) {
   const [name, setName] = useState("");
@@ -339,6 +412,8 @@ function VariantEditorInner({
   const [driverByVehicle, setDriverByVehicle] = useState<Record<string, string>>({});
   const [bikeAssignment, setBikeAssignment] = useState<Record<string, string>>({});
   const [trailerAssignment, setTrailerAssignment] = useState<Record<string, string>>({});
+  const [departureByVehicle, setDepartureByVehicle] = useState<Record<string, string>>({});
+  const [travelTimeOverrideByVehicle, setTravelTimeOverrideByVehicle] = useState<Record<string, number>>({});
   const [selected, setSelected] = useState<{ type: ChipData["type"]; id: string } | null>(null);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -448,6 +523,26 @@ function VariantEditorInner({
     });
   }
 
+  function setDeparture(vehicleId: string, value: string) {
+    setDepartureByVehicle((prev) => {
+      if (!value) {
+        const next = { ...prev };
+        delete next[vehicleId];
+        return next;
+      }
+      return { ...prev, [vehicleId]: value };
+    });
+  }
+
+  function setTravelTimeOverride(vehicleId: string, value: number | undefined) {
+    setTravelTimeOverrideByVehicle((prev) => {
+      const next = { ...prev };
+      if (value == null) delete next[vehicleId];
+      else next[vehicleId] = value;
+      return next;
+    });
+  }
+
   function handleDragEnd(event: DragEndEvent) {
     const { active, over } = event;
     if (!over) return;
@@ -529,6 +624,14 @@ function VariantEditorInner({
         driverByVehicle,
         bikeAssignment,
         trailerAssignment,
+        vehiclePlan: Object.fromEntries(
+          vehicles
+            .filter((v) => departureByVehicle[v.id] || travelTimeOverrideByVehicle[v.id] != null)
+            .map((v) => [
+              v.id,
+              { departureTime: departureByVehicle[v.id], travelTimeOverrideMinutes: travelTimeOverrideByVehicle[v.id] },
+            ]),
+        ),
       });
     } catch {
       setError("Speichern fehlgeschlagen. Versuch's nochmal.");
@@ -564,6 +667,12 @@ function VariantEditorInner({
                 ? bikeOwners.filter((p) => bikeAssignment[p.id] === attachedTrailerId)
                 : [];
 
+              const defaultTravelMinutes = !attachedTrailer
+                ? tripTravelTimes.default
+                : attachedTrailer.type === "BIKE_RACK"
+                  ? tripTravelTimes.bikeTrailer
+                  : tripTravelTimes.cargoTrailer;
+
               return (
                 <VehicleBlock
                   key={vehicle.id}
@@ -573,6 +682,9 @@ function VariantEditorInner({
                   driverId={driverByVehicle[vehicle.id]}
                   attachedTrailer={attachedTrailer}
                   bikesOnAttached={bikesOnAttached}
+                  defaultTravelMinutes={defaultTravelMinutes}
+                  departure={departureByVehicle[vehicle.id]}
+                  travelTimeOverride={travelTimeOverrideByVehicle[vehicle.id]}
                   onFrontTap={() => handleAreaTap("front", vehicle.id)}
                   onBackTap={() => handleAreaTap("back", vehicle.id)}
                   onHitchTap={() => handleAreaTap("hitch", vehicle.id)}
@@ -581,6 +693,8 @@ function VariantEditorInner({
                   onDriverToggle={(pid) => toggleDriver(vehicle.id, pid)}
                   onDetachTrailer={detachTrailer}
                   onUnassignBike={unassignBike}
+                  onDepartureChange={(value) => setDeparture(vehicle.id, value)}
+                  onTravelTimeOverrideChange={(value) => setTravelTimeOverride(vehicle.id, value)}
                 />
               );
             })}
@@ -638,12 +752,14 @@ export function VariantEditor({
   participants,
   vehicles,
   trailers,
+  tripTravelTimes,
 }: {
   shareToken: string;
   tripId: string;
   participants: Participant[];
   vehicles: Vehicle[];
   trailers: Trailer[];
+  tripTravelTimes: TripTravelTimes;
 }) {
   const router = useRouter();
   const [me] = useState(() => getStoredParticipant(shareToken));
@@ -662,6 +778,7 @@ export function VariantEditor({
       participants={participants}
       vehicles={vehicles}
       trailers={trailers}
+      tripTravelTimes={tripTravelTimes}
       me={me}
     />
   );
