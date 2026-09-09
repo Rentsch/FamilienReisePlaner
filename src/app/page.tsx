@@ -35,7 +35,7 @@ export default async function Home() {
   return (
     <div className="flex flex-1 flex-col">
       <AdminNav email={user.email ?? ""} />
-      <main className="mx-auto w-full max-w-2xl flex-1 px-6 py-10">
+      <main className="mx-auto w-full max-w-2xl flex-1 px-6 pt-6 pb-10">
         <div className="mb-6 flex items-center justify-between">
           <h1 className="text-2xl font-semibold text-foreground">
             Reisen

@@ -88,11 +88,14 @@ function EmptySlot({
   icon?: React.ReactNode;
 }) {
   return (
-    <div
-      style={{ width: size, height: size }}
-      className="flex shrink-0 items-center justify-center rounded-full border-2 border-dashed border-[var(--border)] text-zinc-300 dark:text-zinc-600"
-    >
-      {icon ?? <span className="text-lg leading-none">+</span>}
+    <div className="flex shrink-0 flex-col items-center gap-1 p-1.5 text-center">
+      <div
+        style={{ width: size, height: size }}
+        className="flex items-center justify-center rounded-full border-2 border-dashed border-[var(--border)] text-zinc-300 dark:text-zinc-600"
+      >
+        {icon ?? <span className="text-lg leading-none">+</span>}
+      </div>
+      <span className="invisible text-xs leading-none">&nbsp;</span>
     </div>
   );
 }
@@ -148,7 +151,7 @@ function Chip({
         </div>
       )}
       {badge}
-      <span className="max-w-[76px] truncate text-xs text-zinc-700 dark:text-zinc-300">
+      <span className="max-w-[120px] truncate text-xs text-zinc-700 dark:text-zinc-300">
         {chip.name}
       </span>
     </button>
@@ -203,14 +206,14 @@ function SeatCluster({
       (wouldBeFirstDriverSeat && draggingPerson && !draggingPerson.canDrive));
 
   return (
-    <div className="flex flex-col gap-1">
+    <div className="flex shrink-0 flex-col gap-1">
       <p className="text-[11px] text-zinc-500 dark:text-zinc-400">
         {label} ({occupants.length}/{capacity})
       </p>
       <div
         ref={setNodeRef}
         onClick={onAreaClick}
-        className={`flex flex-wrap gap-1.5 rounded-lg p-1 transition-colors ${
+        className={`flex flex-nowrap gap-1.5 rounded-lg p-1 transition-colors ${
           reject
             ? "bg-red-500/10 ring-1 ring-red-400/60"
             : isOver
@@ -374,7 +377,7 @@ function VehicleBlock({
         />
       </div>
 
-      <div className="flex flex-wrap items-start gap-3">
+      <div className="flex items-start gap-3 overflow-x-auto pb-1">
         <SeatCluster
           label="Vorne"
           vehicleId={vehicle.id}
@@ -389,7 +392,7 @@ function VehicleBlock({
           onOccupantClick={onOccupantClick}
         />
 
-        <div className="mt-4 h-11 w-px bg-[var(--border)]" />
+        <div className="mt-4 h-11 w-px shrink-0 bg-[var(--border)]" />
 
         <SeatCluster
           label="Hinten"
@@ -406,8 +409,8 @@ function VehicleBlock({
 
         {vehicle.hasTowHitch && (
           <>
-            <div className="mt-4 h-11 w-px bg-[var(--border)]" />
-            <div className="flex flex-col gap-1">
+            <div className="mt-4 h-11 w-px shrink-0 bg-[var(--border)]" />
+            <div className="flex shrink-0 flex-col gap-1">
               <p className="text-[11px] text-zinc-500 dark:text-zinc-400">Kupplung</p>
               <div
                 ref={setHitchRef}

@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
-import { addMinutesToTime } from "@/lib/time";
+import { addMinutesToTime, formatDurationHM } from "@/lib/time";
 import { getAdminUser } from "@/lib/auth";
 import { VariantDetail } from "@/components/VariantDetail";
 
@@ -93,6 +93,7 @@ export default async function VariantDetailPage({
       })),
       departure,
       arrival: arrival ? `${arrival.time}${arrival.nextDay ? " (+1 Tag)" : ""}` : null,
+      travelDuration: departure && effectiveMinutes != null ? formatDurationHM(effectiveMinutes) : null,
     };
   });
 

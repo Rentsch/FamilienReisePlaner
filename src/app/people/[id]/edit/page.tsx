@@ -21,7 +21,7 @@ export default async function EditPersonPage({
   return (
     <div className="flex flex-1 flex-col">
       <AdminNav email={user.email ?? ""} />
-      <main className="mx-auto w-full max-w-md flex-1 px-6 py-10">
+      <main className="mx-auto w-full max-w-md flex-1 px-6 pt-6 pb-10">
         <h1 className="mb-6 text-2xl font-semibold text-foreground">
           Person bearbeiten
         </h1>

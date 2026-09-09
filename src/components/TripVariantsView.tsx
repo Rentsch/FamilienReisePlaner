@@ -39,6 +39,8 @@ export function TripVariantsView({
     checked: boolean;
   }>({ me: null, checked: false });
   const [pending, setPending] = useState(false);
+  const [showVoters, setShowVoters] = useState(false);
+  const participantNameById = new Map(participants.map((p) => [p.id, p.name]));
 
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect -- deliberate post-mount localStorage read to avoid a hydration mismatch
@@ -82,7 +84,13 @@ export function TripVariantsView({
       </header>
 
       <main className="mx-auto w-full max-w-2xl flex-1 px-6 py-8">
-        <div className="mb-6 flex justify-end">
+        <div className="mb-6 flex justify-end gap-2">
+          <button
+            onClick={() => setShowVoters((v) => !v)}
+            className="rounded-full border border-[var(--border)] px-4 py-2 text-sm font-medium hover:bg-black/[.04] dark:hover:bg-white/[.06]"
+          >
+            {showVoters ? "Stimmen ausblenden" : "Wer hat abgestimmt?"}
+          </button>
           <Link
             href={`/t/${shareToken}/variant/new`}
             className="rounded-full bg-accent px-5 py-2 text-sm font-medium text-accent-foreground hover:brightness-110"
@@ -111,6 +119,15 @@ export function TripVariantsView({
                       {variant.usedVehicles !== 1 && "s"} genutzt · {variant.voteCount} Stimme
                       {variant.voteCount !== 1 && "n"}
                     </p>
+                    {showVoters && (
+                      <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
+                        {variant.voterParticipantIds.length > 0
+                          ? variant.voterParticipantIds
+                              .map((id) => participantNameById.get(id) ?? "?")
+                              .join(", ")
+                          : "Noch niemand"}
+                      </p>
+                    )}
                   </Link>
                   <div className="flex shrink-0 gap-2">
                     <Link

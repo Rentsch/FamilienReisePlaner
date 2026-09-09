@@ -1,23 +1,40 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
 import { requireAdmin } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 
-export async function createTrailer(formData: FormData) {
-  const user = await requireAdmin();
+function trailerData(formData: FormData) {
   const capacity = formData.get("capacity") as string;
 
+  return {
+    name: (formData.get("name") as string).trim(),
+    type: formData.get("type") as "CARGO" | "BIKE_RACK",
+    capacity: capacity ? Number(capacity) : null,
+  };
+}
+
+export async function createTrailer(formData: FormData) {
+  const user = await requireAdmin();
+
   await prisma.trailer.create({
-    data: {
-      adminUserId: user.id,
-      name: (formData.get("name") as string).trim(),
-      type: formData.get("type") as "CARGO" | "BIKE_RACK",
-      capacity: capacity ? Number(capacity) : undefined,
-    },
+    data: { adminUserId: user.id, ...trailerData(formData) },
   });
 
   revalidatePath("/trailers");
+}
+
+export async function updateTrailer(id: string, formData: FormData) {
+  const user = await requireAdmin();
+
+  await prisma.trailer.update({
+    where: { id, adminUserId: user.id },
+    data: trailerData(formData),
+  });
+
+  revalidatePath("/trailers");
+  redirect("/trailers");
 }
 
 export async function deleteTrailer(id: string) {

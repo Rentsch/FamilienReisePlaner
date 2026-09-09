@@ -39,11 +39,14 @@ export default async function TripDetailPage({
   return (
     <div className="flex flex-1 flex-col">
       <AdminNav email={user.email ?? ""} />
-      <main className="mx-auto w-full max-w-2xl flex-1 px-6 py-10">
-        <Link href="/" className="text-sm text-zinc-500 hover:text-foreground">
+      <main className="mx-auto w-full max-w-2xl flex-1 px-6 pt-6 pb-10">
+        <Link
+          href="/"
+          className="mb-1 inline-block text-xs font-medium text-accent hover:underline"
+        >
           ← Alle Reisen
         </Link>
-        <div className="mt-2 mb-1 flex items-center justify-between gap-3">
+        <div className="mb-1 flex items-center justify-between gap-3">
           <h1 className="text-2xl font-semibold text-foreground">{trip.name}</h1>
           <Link
             href={`/trips/${trip.id}/edit`}
@@ -65,6 +68,14 @@ export default async function TripDetailPage({
             <p className="break-all font-mono text-sm text-foreground">{shareUrl}</p>
           </div>
           <CopyLinkButton url={shareUrl} />
+          <a
+            href={shareUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="rounded-full border border-[var(--border)] px-4 py-2 text-sm font-medium hover:bg-black/[.04] dark:hover:bg-white/[.06]"
+          >
+            In neuem Tab öffnen
+          </a>
         </div>
 
         <section className="mb-8">

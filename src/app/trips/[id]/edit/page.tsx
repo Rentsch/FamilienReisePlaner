@@ -33,7 +33,7 @@ export default async function EditTripPage({
   return (
     <div className="flex flex-1 flex-col">
       <AdminNav email={user.email ?? ""} />
-      <main className="mx-auto w-full max-w-2xl flex-1 px-6 py-10">
+      <main className="mx-auto w-full max-w-2xl flex-1 px-6 pt-6 pb-10">
         <Link href={`/trips/${trip.id}`} className="text-sm text-zinc-500 hover:text-foreground">
           ← {trip.name}
         </Link>

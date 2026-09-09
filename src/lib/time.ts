@@ -4,6 +4,14 @@ export function formatTripDate(date: Date | string | null | undefined): string |
   return d.toLocaleDateString("de-DE", { weekday: "short", day: "2-digit", month: "long", year: "numeric", timeZone: "UTC" });
 }
 
+export function formatDurationHM(minutes: number): string {
+  const h = Math.floor(minutes / 60);
+  const m = minutes % 60;
+  if (h === 0) return `${m}min`;
+  if (m === 0) return `${h}h`;
+  return `${h}h ${String(m).padStart(2, "0")}`;
+}
+
 export function addMinutesToTime(time: string, minutes: number): { time: string; nextDay: boolean } {
   const [h, m] = time.split(":").map(Number);
   const total = h * 60 + m + minutes;

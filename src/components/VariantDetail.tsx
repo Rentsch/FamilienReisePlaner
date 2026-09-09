@@ -23,6 +23,7 @@ type VehicleView = {
   bikes: { name: string }[];
   departure: string | null;
   arrival: string | null;
+  travelDuration: string | null;
 };
 
 function Avatar({ name, photoUrl, size }: { name: string; photoUrl: string | null; size: number }) {
@@ -166,14 +167,30 @@ export function VariantDetail({
         <div className="flex flex-col gap-4">
           {variant.vehicles.map((v) => (
             <div key={v.id} className="rounded-lg border-l-[3px] border-l-accent/50 py-3 pl-3 pr-3">
-              <p className="mb-2 font-medium text-foreground">
-                {v.name}{" "}
-                <span className="text-xs text-zinc-500 dark:text-zinc-400">
-                  ({v.front.length + v.back.length}/{v.seats})
-                </span>
-              </p>
+              <div className="mb-2 flex flex-wrap items-center justify-between gap-x-3 gap-y-1">
+                <p className="font-medium text-foreground">
+                  {v.name}{" "}
+                  <span className="text-xs text-zinc-500 dark:text-zinc-400">
+                    ({v.front.length + v.back.length}/{v.seats})
+                  </span>
+                </p>
+                {(v.departure || v.arrival) && (
+                  <div className="flex flex-col items-center gap-0.5 rounded-md bg-accent/10 px-2 py-1">
+                    {v.travelDuration && (
+                      <span className="text-[10px] font-medium leading-none text-accent">
+                        {v.travelDuration}
+                      </span>
+                    )}
+                    <div className="flex items-center gap-1.5 text-xs font-medium leading-none text-foreground">
+                      <span>{v.departure ?? "—"}</span>
+                      <span className="text-accent">→</span>
+                      <span>{v.arrival ?? "—"}</span>
+                    </div>
+                  </div>
+                )}
+              </div>
 
-              <div className="flex flex-wrap items-start gap-3">
+              <div className="flex items-start gap-3 overflow-x-auto pb-1">
                 <div className="flex flex-col gap-1">
                   <p className="text-[11px] text-zinc-500 dark:text-zinc-400">
                     Vorne ({v.front.length}/{v.frontSeats})
@@ -187,8 +204,8 @@ export function VariantDetail({
 
                 {v.back.length > 0 && (
                   <>
-                    <div className="mt-4 h-11 w-px bg-[var(--border)]" />
-                    <div className="flex flex-col gap-1">
+                    <div className="mt-4 h-11 w-px shrink-0 bg-[var(--border)]" />
+                    <div className="flex shrink-0 flex-col gap-1">
                       <p className="text-[11px] text-zinc-500 dark:text-zinc-400">
                         Hinten ({v.back.length}/{v.seats - v.frontSeats})
                       </p>
@@ -203,8 +220,8 @@ export function VariantDetail({
 
                 {v.trailerName && (
                   <>
-                    <div className="mt-4 h-11 w-px bg-[var(--border)]" />
-                    <div className="flex flex-col gap-1">
+                    <div className="mt-4 h-11 w-px shrink-0 bg-[var(--border)]" />
+                    <div className="flex shrink-0 flex-col gap-1">
                       <p className="text-[11px] text-zinc-500 dark:text-zinc-400">Kupplung</p>
                       <div className="flex shrink-0 flex-col items-center gap-1 p-1.5 text-center">
                         <div
@@ -217,35 +234,25 @@ export function VariantDetail({
                             <IconCaravan size={SLOT_SIZE * 0.5} stroke={1.75} />
                           )}
                         </div>
-                        <span className="max-w-[76px] truncate text-xs text-zinc-700 dark:text-zinc-300">
+                        <span className="max-w-[120px] truncate text-xs text-zinc-700 dark:text-zinc-300">
                           {v.trailerName}
                         </span>
                       </div>
                     </div>
                   </>
                 )}
-
-                {v.bikes.length > 0 && (
-                  <>
-                    <div className="mt-4 h-11 w-px bg-[var(--border)]" />
-                    <div className="flex flex-col gap-1">
-                      <p className="text-[11px] text-zinc-500 dark:text-zinc-400">
-                        Fahrräder ({v.bikes.length})
-                      </p>
-                      <div className="flex flex-wrap gap-1">
-                        {v.bikes.map((b) => (
-                          <BikeSlot key={b.name} name={b.name} />
-                        ))}
-                      </div>
-                    </div>
-                  </>
-                )}
               </div>
 
-              {(v.departure || v.arrival) && (
-                <div className="mt-3 flex gap-4 border-t border-[var(--border)] pt-3 text-xs text-zinc-500 dark:text-zinc-400">
-                  {v.departure && <span>Abfahrt {v.departure}</span>}
-                  {v.arrival && <span>Ankunft ca. {v.arrival}</span>}
+              {v.bikes.length > 0 && (
+                <div className="mt-2 flex w-fit flex-col gap-1">
+                  <p className="text-[11px] text-zinc-500 dark:text-zinc-400">
+                    Fahrräder ({v.bikes.length})
+                  </p>
+                  <div className="flex flex-wrap gap-1">
+                    {v.bikes.map((b) => (
+                      <BikeSlot key={b.name} name={b.name} />
+                    ))}
+                  </div>
                 </div>
               )}
             </div>

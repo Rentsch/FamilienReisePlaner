@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { requireAdmin } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { AdminNav } from "@/components/AdminNav";
@@ -15,7 +16,7 @@ export default async function TrailersPage() {
   return (
     <div className="flex flex-1 flex-col">
       <AdminNav email={user.email ?? ""} />
-      <main className="mx-auto w-full max-w-2xl flex-1 px-6 py-10">
+      <main className="mx-auto w-full max-w-2xl flex-1 px-6 pt-6 pb-10">
         <h1 className="mb-6 text-2xl font-semibold text-foreground">
           Anhänger
         </h1>
@@ -71,6 +72,12 @@ export default async function TrailersPage() {
                   {trailer.capacity != null && ` · Kapazität ${trailer.capacity}`}
                 </p>
               </div>
+              <Link
+                href={`/trailers/${trailer.id}/edit`}
+                className="text-sm text-zinc-600 hover:text-foreground dark:text-zinc-400"
+              >
+                Bearbeiten
+              </Link>
               <form action={deleteTrailer.bind(null, trailer.id)}>
                 <button className="text-sm text-red-600 hover:text-red-800 dark:text-red-400">
                   Löschen
