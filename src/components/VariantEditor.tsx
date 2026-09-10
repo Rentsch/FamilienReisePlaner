@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import {
   DndContext,
+  DragOverlay,
   useDraggable,
   useDroppable,
   PointerSensor,
@@ -14,7 +15,6 @@ import {
   type DragStartEvent,
   type DragEndEvent,
 } from "@dnd-kit/core";
-import { CSS } from "@dnd-kit/utilities";
 import { IconSteeringWheel, IconLink, IconBike, IconCaravan, IconCar } from "@tabler/icons-react";
 import { getStoredParticipant } from "@/lib/participant";
 import { addMinutesToTime, formatDurationHM, parseDurationHM } from "@/lib/time";
@@ -101,42 +101,17 @@ function EmptySlot({
   );
 }
 
-function Chip({
+function ChipContent({
   chip,
-  selected,
-  onClick,
   badge,
   size = AVATAR_SIZE,
 }: {
   chip: ChipData;
-  selected: boolean;
-  onClick: () => void;
   badge?: React.ReactNode;
   size?: number;
 }) {
-  const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
-    id: `${chip.type}:${chip.id}`,
-    data: chip,
-  });
-
-  const style = transform
-    ? { transform: CSS.Translate.toString(transform), zIndex: 50 }
-    : undefined;
-
   return (
-    <button
-      ref={setNodeRef}
-      style={style}
-      {...listeners}
-      {...attributes}
-      onClick={(e) => {
-        e.stopPropagation();
-        onClick();
-      }}
-      className={`relative flex shrink-0 flex-col items-center gap-1 rounded-lg p-1.5 text-center ${
-        selected ? "ring-2 ring-accent" : ""
-      } ${isDragging ? "opacity-50" : ""}`}
-    >
+    <>
       {chip.type === "person" ? (
         <Avatar name={chip.name} photoUrl={chip.photoUrl} size={size} />
       ) : (
@@ -155,6 +130,45 @@ function Chip({
       <span className="max-w-[120px] truncate text-xs text-zinc-700 dark:text-zinc-300">
         {chip.name}
       </span>
+    </>
+  );
+}
+
+// Dragged chips render via <DragOverlay> (a body-level portal) instead of moving in
+// place, so the drag preview isn't clipped by scrollable/overflow ancestors like the
+// bottom tray (overflow-x-auto there computes overflow-y to auto too, per the CSS spec).
+function Chip({
+  chip,
+  selected,
+  onClick,
+  badge,
+  size = AVATAR_SIZE,
+}: {
+  chip: ChipData;
+  selected: boolean;
+  onClick: () => void;
+  badge?: React.ReactNode;
+  size?: number;
+}) {
+  const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
+    id: `${chip.type}:${chip.id}`,
+    data: chip,
+  });
+
+  return (
+    <button
+      ref={setNodeRef}
+      {...listeners}
+      {...attributes}
+      onClick={(e) => {
+        e.stopPropagation();
+        onClick();
+      }}
+      className={`relative flex shrink-0 flex-col items-center gap-1 rounded-lg p-1.5 text-center ${
+        selected ? "ring-2 ring-accent" : ""
+      } ${isDragging ? "opacity-30" : ""}`}
+    >
+      <ChipContent chip={chip} badge={badge} size={size} />
     </button>
   );
 }
@@ -968,6 +982,14 @@ function VariantEditorInner({
           </div>
         </div>
       </div>
+
+      <DragOverlay dropAnimation={null}>
+        {draggingChip && (
+          <div className="flex shrink-0 flex-col items-center gap-1 rounded-lg p-1.5 text-center opacity-90">
+            <ChipContent chip={draggingChip} size={AVATAR_SIZE} />
+          </div>
+        )}
+      </DragOverlay>
     </DndContext>
   );
 }
