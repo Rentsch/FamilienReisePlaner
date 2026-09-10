@@ -1,10 +1,11 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { IconBike, IconCaravan, IconCar } from "@tabler/icons-react";
+import { IconBike, IconCaravan, IconCar, IconDownload } from "@tabler/icons-react";
 import { getStoredParticipant } from "@/lib/participant";
+import { formatTripDate } from "@/lib/time";
 import { voteForVariant } from "@/app/t/[shareToken]/actions";
 
 const SLOT_SIZE = 44;
@@ -33,6 +34,7 @@ function Avatar({ name, photoUrl, size }: { name: string; photoUrl: string | nul
       <img
         src={photoUrl}
         alt={name}
+        crossOrigin="anonymous"
         style={{ width: size, height: size }}
         className="rounded-full object-cover"
       />
@@ -84,12 +86,16 @@ export function VariantDetail({
   tripId,
   isAdminView,
   participants,
+  tripName,
+  tripDate,
   variant,
 }: {
   shareToken: string;
   tripId: string;
   isAdminView?: boolean;
   participants: string[];
+  tripName: string;
+  tripDate?: Date | string | null;
   variant: {
     id: string;
     name: string;
@@ -105,6 +111,63 @@ export function VariantDetail({
     checked: boolean;
   }>({ me: null, checked: false });
   const [pending, setPending] = useState(false);
+  const [exporting, setExporting] = useState(false);
+  const [exportError, setExportError] = useState<string | null>(null);
+  const exportRef = useRef<HTMLDivElement>(null);
+  const formattedDate = formatTripDate(tripDate);
+
+  async function handleExport() {
+    if (!exportRef.current || exporting) return;
+    setExporting(true);
+    setExportError(null);
+
+    // Re-encode each already-rendered photo to a plain PNG data URI ourselves, using
+    // the browser's own decoded bitmap, and swap it in temporarily. html-to-image embeds
+    // <img> tags by re-fetching them, and some storage hosts serve photos (e.g. an
+    // iPhone .HEIC upload) with a generic content-type that the fetched-and-reconstructed
+    // <img> can't decode even though the live page renders it fine — that stalls the
+    // export indefinitely rather than failing. Pre-baked data URIs need no re-fetch.
+    const swapped: { el: HTMLImageElement; originalSrc: string }[] = [];
+    for (const img of Array.from(exportRef.current.querySelectorAll("img"))) {
+      if (!img.complete || !img.naturalWidth) continue;
+      try {
+        const canvas = document.createElement("canvas");
+        canvas.width = img.naturalWidth;
+        canvas.height = img.naturalHeight;
+        const ctx = canvas.getContext("2d");
+        if (!ctx) continue;
+        ctx.drawImage(img, 0, 0);
+        const pngDataUrl = canvas.toDataURL("image/png");
+        swapped.push({ el: img, originalSrc: img.src });
+        img.src = pngDataUrl;
+      } catch {
+        // couldn't re-encode this one (e.g. a tainted canvas) — leave it as-is and let
+        // html-to-image's own embedding attempt it
+      }
+    }
+
+    try {
+      const { toPng } = await import("html-to-image");
+      const backgroundColor = getComputedStyle(document.documentElement)
+        .getPropertyValue("--background")
+        .trim();
+      const dataUrl = await Promise.race([
+        toPng(exportRef.current, { backgroundColor: backgroundColor || undefined, pixelRatio: 2 }),
+        new Promise<never>((_, reject) => setTimeout(() => reject(new Error("export timed out")), 20000)),
+      ]);
+      const link = document.createElement("a");
+      const slug = (s: string) => s.trim().replace(/[^\p{L}\p{N}]+/gu, "-").replace(/^-+|-+$/g, "");
+      link.download = `${slug(tripName)}-${slug(variant.name)}.png`;
+      link.href = dataUrl;
+      link.click();
+    } catch (e) {
+      console.error("Variant export failed", e);
+      setExportError("Export fehlgeschlagen. Versuch's nochmal.");
+    } finally {
+      for (const { el, originalSrc } of swapped) el.src = originalSrc;
+      setExporting(false);
+    }
+  }
 
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect -- deliberate post-mount localStorage read to avoid a hydration mismatch
@@ -152,19 +215,39 @@ export function VariantDetail({
               von {variant.creatorName} · {variant.voteCount} Stimme{variant.voteCount !== 1 && "n"}
             </p>
           </div>
-          {isAdminView && (
-            <Link
-              href={`/t/${shareToken}/variant/${variant.id}/edit`}
-              className="shrink-0 rounded-full border border-[var(--border)] px-4 py-1.5 text-sm font-medium hover:bg-black/[.04] dark:hover:bg-white/[.06]"
+          <div className="flex shrink-0 gap-2">
+            <button
+              onClick={handleExport}
+              disabled={exporting}
+              className="flex items-center gap-1.5 rounded-full border border-[var(--border)] px-4 py-1.5 text-sm font-medium hover:bg-black/[.04] disabled:opacity-50 dark:hover:bg-white/[.06]"
             >
-              Bearbeiten
-            </Link>
-          )}
+              <IconDownload size={16} stroke={1.75} />
+              {exporting ? "Exportiere…" : "Export"}
+            </button>
+            {isAdminView && (
+              <Link
+                href={`/t/${shareToken}/variant/${variant.id}/edit`}
+                className="rounded-full border border-[var(--border)] px-4 py-1.5 text-sm font-medium hover:bg-black/[.04] dark:hover:bg-white/[.06]"
+              >
+                Bearbeiten
+              </Link>
+            )}
+          </div>
         </div>
+        {exportError && (
+          <p className="mt-2 text-right text-xs text-red-600 dark:text-red-400">{exportError}</p>
+        )}
       </header>
 
       <main className="mx-auto w-full max-w-2xl flex-1 px-4 py-6">
-        <div className="flex flex-col gap-4">
+        <div ref={exportRef} className="flex flex-col gap-4 bg-background p-2">
+          <div>
+            <p className="text-xs text-zinc-500 dark:text-zinc-400">
+              {tripName}
+              {formattedDate && ` · ${formattedDate}`}
+            </p>
+            <h2 className="text-lg font-semibold text-foreground">{variant.name}</h2>
+          </div>
           {variant.vehicles.map((v) => (
             <div key={v.id} className="rounded-lg border-l-[3px] border-l-accent/50 bg-[var(--surface)]/60 py-3 pl-3 pr-3">
               <div className="mb-2 flex flex-wrap items-center justify-between gap-x-3 gap-y-1">

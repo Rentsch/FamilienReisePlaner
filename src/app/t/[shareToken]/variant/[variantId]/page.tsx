@@ -103,6 +103,8 @@ export default async function VariantDetailPage({
       tripId={trip.id}
       isAdminView={adminUser?.id === trip.adminUserId}
       participants={trip.participants.map((p) => p.id)}
+      tripName={trip.name}
+      tripDate={trip.date}
       variant={{
         id: variant.id,
         name: variant.name,
