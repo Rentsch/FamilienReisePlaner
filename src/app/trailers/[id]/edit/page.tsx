@@ -3,6 +3,7 @@ import { requireAdmin } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { AdminNav } from "@/components/AdminNav";
 import { SubmitButton } from "@/components/SubmitButton";
+import { TrailerTypeAndCapacityFields } from "@/components/TrailerTypeAndCapacityFields";
 import { updateTrailer } from "../../actions";
 
 export default async function EditTrailerPage({
@@ -40,28 +41,7 @@ export default async function EditTrailerPage({
             />
           </label>
 
-          <label className="flex flex-col gap-1 text-sm text-zinc-700 dark:text-zinc-300">
-            Typ
-            <select
-              name="type"
-              defaultValue={trailer.type}
-              className="rounded border border-[var(--border)] px-3 py-2 dark:bg-[var(--surface)]"
-            >
-              <option value="CARGO">Lasten-Anhänger</option>
-              <option value="BIKE_RACK">Fahrradträger</option>
-            </select>
-          </label>
-
-          <label className="flex flex-col gap-1 text-sm text-zinc-700 dark:text-zinc-300">
-            Kapazität (Fahrräder, nur bei Fahrradträger)
-            <input
-              name="capacity"
-              type="number"
-              min={0}
-              defaultValue={trailer.capacity ?? ""}
-              className="rounded border border-[var(--border)] px-3 py-2 dark:bg-[var(--surface)]"
-            />
-          </label>
+          <TrailerTypeAndCapacityFields defaultType={trailer.type} defaultCapacity={trailer.capacity} />
 
           <SubmitButton
             pendingText="Wird gespeichert…"
