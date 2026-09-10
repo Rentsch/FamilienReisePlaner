@@ -1,15 +1,13 @@
 import Link from "next/link";
-import { createClient } from "@/lib/supabase/server";
+import { getAdminUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { AdminNav } from "@/components/AdminNav";
+import { SubmitButton } from "@/components/SubmitButton";
 import { formatTripDate } from "@/lib/time";
 import { deleteTrip } from "./trips/actions";
 
 export default async function Home() {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await getAdminUser();
 
   if (!user) {
     return (
@@ -63,9 +61,12 @@ export default async function Home() {
                 </p>
               </Link>
               <form action={deleteTrip.bind(null, trip.id)}>
-                <button className="shrink-0 text-sm text-red-600 hover:text-red-800 dark:text-red-400">
+                <SubmitButton
+                  pendingText="Löschen…"
+                  className="shrink-0 text-sm text-red-600 hover:text-red-800 dark:text-red-400"
+                >
                   Löschen
-                </button>
+                </SubmitButton>
               </form>
             </li>
           ))}

@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { requireAdmin } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { AdminNav } from "@/components/AdminNav";
+import { SubmitButton } from "@/components/SubmitButton";
 import { updateTrip } from "../../actions";
 
 export default async function EditTripPage({
@@ -162,9 +163,12 @@ export default async function EditTripPage({
             sich hier nicht entfernen — entferne sie zuerst aus der jeweiligen Variante.
           </p>
 
-          <button className="self-start rounded-full bg-accent px-6 py-2 text-sm font-medium text-accent-foreground hover:brightness-110">
+          <SubmitButton
+            pendingText="Wird gespeichert…"
+            className="self-start rounded-full bg-accent px-6 py-2 text-sm font-medium text-accent-foreground hover:brightness-110"
+          >
             Speichern
-          </button>
+          </SubmitButton>
         </form>
       </main>
     </div>

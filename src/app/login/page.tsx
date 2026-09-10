@@ -1,4 +1,5 @@
 import { login } from "./actions";
+import { SubmitButton } from "@/components/SubmitButton";
 
 export default async function LoginPage({
   searchParams,
@@ -47,12 +48,13 @@ export default async function LoginPage({
         </label>
 
         <div className="flex pt-2">
-          <button
+          <SubmitButton
             formAction={login}
+            pendingText="Wird angemeldet…"
             className="flex-1 rounded-full bg-accent px-5 py-2 text-sm font-medium text-accent-foreground hover:brightness-110"
           >
             Anmelden
-          </button>
+          </SubmitButton>
         </div>
       </form>
     </div>

@@ -5,6 +5,7 @@ import { requireAdmin } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { AdminNav } from "@/components/AdminNav";
 import { CopyLinkButton } from "@/components/CopyLinkButton";
+import { SubmitButton } from "@/components/SubmitButton";
 import { formatTripDate } from "@/lib/time";
 import { updateTripTravelTimes } from "../actions";
 
@@ -157,9 +158,12 @@ export default async function TripDetailPage({
                 className="w-32 rounded border border-[var(--border)] px-3 py-2 dark:bg-[var(--surface)]"
               />
             </label>
-            <button className="rounded-full border border-[var(--border)] px-4 py-2 text-sm font-medium hover:bg-black/[.04] dark:hover:bg-white/[.06]">
+            <SubmitButton
+              pendingText="Wird gespeichert…"
+              className="rounded-full border border-[var(--border)] px-4 py-2 text-sm font-medium hover:bg-black/[.04] dark:hover:bg-white/[.06]"
+            >
               Speichern
-            </button>
+            </SubmitButton>
           </form>
         </section>
 

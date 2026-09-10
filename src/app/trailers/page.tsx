@@ -2,6 +2,7 @@ import Link from "next/link";
 import { requireAdmin } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { AdminNav } from "@/components/AdminNav";
+import { SubmitButton } from "@/components/SubmitButton";
 import { createTrailer, deleteTrailer } from "./actions";
 
 const typeLabel = { CARGO: "Lasten-Anhänger", BIKE_RACK: "Fahrradträger" };
@@ -63,9 +64,12 @@ export default async function TrailersPage({
               className="w-24 rounded border border-[var(--border)] px-3 py-2 dark:bg-[var(--surface)]"
             />
           </label>
-          <button className="rounded-full bg-accent px-5 py-2 text-sm font-medium text-accent-foreground hover:brightness-110">
+          <SubmitButton
+            pendingText="Wird hinzugefügt…"
+            className="rounded-full bg-accent px-5 py-2 text-sm font-medium text-accent-foreground hover:brightness-110"
+          >
             Hinzufügen
-          </button>
+          </SubmitButton>
         </form>
 
         <ul className="flex flex-col gap-2">
@@ -90,9 +94,12 @@ export default async function TrailersPage({
                 Bearbeiten
               </Link>
               <form action={deleteTrailer.bind(null, trailer.id)}>
-                <button className="text-sm text-red-600 hover:text-red-800 dark:text-red-400">
+                <SubmitButton
+                  pendingText="Löschen…"
+                  className="text-sm text-red-600 hover:text-red-800 dark:text-red-400"
+                >
                   Löschen
-                </button>
+                </SubmitButton>
               </form>
             </li>
           ))}

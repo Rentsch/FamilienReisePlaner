@@ -2,6 +2,7 @@ import Link from "next/link";
 import { logout } from "@/app/login/actions";
 import { APP_VERSION } from "@/lib/version";
 import { AdminNavMobileMenu } from "./AdminNavMobileMenu";
+import { SubmitButton } from "./SubmitButton";
 
 const links = [
   { href: "/", label: "Reisen" },
@@ -34,9 +35,12 @@ export function AdminNav({ email }: { email: string }) {
       <div className="flex shrink-0 items-center gap-3 text-sm text-zinc-500 dark:text-zinc-400">
         <span className="hidden sm:inline">{email}</span>
         <form action={logout}>
-          <button className="rounded-full border border-[var(--border)] px-3 py-1 hover:bg-black/[.04] dark:hover:bg-white/[.06]">
+          <SubmitButton
+            pendingText="Abmelden…"
+            className="rounded-full border border-[var(--border)] px-3 py-1 hover:bg-black/[.04] dark:hover:bg-white/[.06]"
+          >
             Abmelden
-          </button>
+          </SubmitButton>
         </form>
       </div>
     </nav>

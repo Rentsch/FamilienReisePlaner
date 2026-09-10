@@ -2,6 +2,7 @@ import Link from "next/link";
 import { requireAdmin } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { AdminNav } from "@/components/AdminNav";
+import { SubmitButton } from "@/components/SubmitButton";
 import { createVehicle, deleteVehicle } from "./actions";
 
 export default async function VehiclesPage({
@@ -68,9 +69,12 @@ export default async function VehiclesPage({
             <input type="checkbox" name="hasTowHitch" className="h-4 w-4" />
             Anhängerkupplung
           </label>
-          <button className="rounded-full bg-accent px-5 py-2 text-sm font-medium text-accent-foreground hover:brightness-110">
+          <SubmitButton
+            pendingText="Wird hinzugefügt…"
+            className="rounded-full bg-accent px-5 py-2 text-sm font-medium text-accent-foreground hover:brightness-110"
+          >
             Hinzufügen
-          </button>
+          </SubmitButton>
         </form>
 
         <ul className="flex flex-col gap-2">
@@ -95,9 +99,12 @@ export default async function VehiclesPage({
                 Bearbeiten
               </Link>
               <form action={deleteVehicle.bind(null, vehicle.id)}>
-                <button className="text-sm text-red-600 hover:text-red-800 dark:text-red-400">
+                <SubmitButton
+                  pendingText="Löschen…"
+                  className="text-sm text-red-600 hover:text-red-800 dark:text-red-400"
+                >
                   Löschen
-                </button>
+                </SubmitButton>
               </form>
             </li>
           ))}

@@ -2,6 +2,7 @@ import Link from "next/link";
 import { requireAdmin } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { AdminNav } from "@/components/AdminNav";
+import { SubmitButton } from "@/components/SubmitButton";
 import { createTrip } from "../actions";
 
 export default async function NewTripPage() {
@@ -180,9 +181,12 @@ export default async function NewTripPage() {
             </fieldset>
           )}
 
-          <button className="self-start rounded-full bg-accent px-6 py-2 text-sm font-medium text-accent-foreground hover:brightness-110">
+          <SubmitButton
+            pendingText="Wird angelegt…"
+            className="self-start rounded-full bg-accent px-6 py-2 text-sm font-medium text-accent-foreground hover:brightness-110"
+          >
             Reise anlegen
-          </button>
+          </SubmitButton>
         </form>
       </main>
     </div>
