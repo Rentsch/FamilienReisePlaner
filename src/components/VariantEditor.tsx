@@ -15,7 +15,7 @@ import {
   type DragStartEvent,
   type DragEndEvent,
 } from "@dnd-kit/core";
-import { IconSteeringWheel, IconLink, IconBike, IconCaravan, IconCar } from "@tabler/icons-react";
+import { IconSteeringWheel, IconLink, IconBike, IconCaravan } from "@tabler/icons-react";
 import { getStoredParticipant } from "@/lib/participant";
 import { addMinutesToTime, formatDurationHM, parseDurationHM } from "@/lib/time";
 import { saveVariant, type SeatRow } from "@/app/t/[shareToken]/variant/actions";
@@ -179,7 +179,7 @@ function DriverBadge() {
       title="Fährt dieses Auto"
       className="absolute -right-1 -top-1 flex h-6 w-6 items-center justify-center rounded-full border border-accent bg-accent text-accent-foreground"
     >
-      <IconCar size={14} stroke={2} />
+      <IconSteeringWheel size={14} stroke={2} />
     </span>
   );
 }

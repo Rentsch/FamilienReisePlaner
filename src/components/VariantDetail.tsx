@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { IconBike, IconCaravan, IconCar, IconDownload } from "@tabler/icons-react";
+import { IconBike, IconCaravan, IconSteeringWheel, IconDownload } from "@tabler/icons-react";
 import { getStoredParticipant } from "@/lib/participant";
 import { formatTripDate } from "@/lib/time";
 import { voteForVariant } from "@/app/t/[shareToken]/actions";
@@ -59,7 +59,7 @@ function PersonSlot({ name, photoUrl, isDriver }: { name: string; photoUrl: stri
           title="Fährt dieses Auto"
           className="absolute -right-1 -top-1 flex h-6 w-6 items-center justify-center rounded-full border border-accent bg-accent text-accent-foreground"
         >
-          <IconCar size={14} stroke={2} />
+          <IconSteeringWheel size={14} stroke={2} />
         </span>
       )}
       <span className="max-w-[76px] truncate text-xs text-zinc-700 dark:text-zinc-300">{name}</span>
@@ -155,11 +155,30 @@ export function VariantDetail({
         toPng(exportRef.current, { backgroundColor: backgroundColor || undefined, pixelRatio: 2 }),
         new Promise<never>((_, reject) => setTimeout(() => reject(new Error("export timed out")), 20000)),
       ]);
-      const link = document.createElement("a");
       const slug = (s: string) => s.trim().replace(/[^\p{L}\p{N}]+/gu, "-").replace(/^-+|-+$/g, "");
-      link.download = `${slug(tripName)}-${slug(variant.name)}.png`;
-      link.href = dataUrl;
+      const filename = `${slug(tripName)}-${slug(variant.name)}.png`;
+
+      // On phones, a plain <a download> lands in Files (or just opens the image) rather
+      // than the Photos/gallery app. The Web Share API's native sheet offers "Save Image"
+      // there, so prefer it whenever the platform can share a file.
+      const blob = await (await fetch(dataUrl)).blob();
+      const file = new File([blob], filename, { type: "image/png" });
+      if (navigator.canShare?.({ files: [file] })) {
+        try {
+          await navigator.share({ files: [file], title: variant.name });
+          return;
+        } catch (shareError) {
+          if (shareError instanceof Error && shareError.name === "AbortError") return;
+          // sharing failed for some other reason — fall back to a direct download below
+        }
+      }
+
+      const link = document.createElement("a");
+      const objectUrl = URL.createObjectURL(file);
+      link.download = filename;
+      link.href = objectUrl;
       link.click();
+      setTimeout(() => URL.revokeObjectURL(objectUrl), 10000);
     } catch (e) {
       console.error("Variant export failed", e);
       setExportError("Export fehlgeschlagen. Versuch's nochmal.");
@@ -274,7 +293,7 @@ export function VariantDetail({
               </div>
 
               <div className="flex items-start gap-3 overflow-x-auto pb-1">
-                <div className="flex flex-col gap-1">
+                <div className="flex shrink-0 flex-col gap-1">
                   <p className="text-[11px] text-zinc-500 dark:text-zinc-400">
                     Vorne ({v.front.length}/{v.frontSeats})
                   </p>

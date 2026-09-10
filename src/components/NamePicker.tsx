@@ -30,7 +30,9 @@ export function NamePicker({
     <div className="flex flex-1 items-center justify-center bg-background px-6 py-8">
       <div className="flex w-full max-w-sm flex-col gap-4">
         <div className="flex flex-col gap-1.5 rounded-xl border border-[var(--border)] bg-[var(--surface)] p-6">
-          <h1 className="text-lg font-semibold text-foreground">Willkommen beim Familien-Reiseplaner</h1>
+          <h1 className="text-lg font-semibold text-foreground">
+            Willkommen beim <span className="whitespace-nowrap">Familien-Reiseplaner</span>
+          </h1>
           <p className="text-sm font-medium text-zinc-500 dark:text-zinc-400">Wer fährt mit wem?</p>
           <p className="text-sm text-zinc-600 dark:text-zinc-400">
             Gemeinsam finden wir die beste Aufteilung von Personen, Autos und Fahrrädern für unsere
