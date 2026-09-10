@@ -6,6 +6,8 @@ import Link from "next/link";
 import { getStoredParticipant } from "@/lib/participant";
 import { formatTripDate } from "@/lib/time";
 import { voteForVariant } from "@/app/t/[shareToken]/actions";
+import type { TripStats } from "@/lib/tripStats";
+import { TripStatsOverview } from "./TripStatsOverview";
 
 type Variant = {
   id: string;
@@ -25,6 +27,7 @@ export function TripVariantsView({
   isAdminView,
   participants,
   variants,
+  stats,
 }: {
   shareToken: string;
   tripId: string;
@@ -33,6 +36,7 @@ export function TripVariantsView({
   isAdminView?: boolean;
   participants: { id: string; name: string }[];
   variants: Variant[];
+  stats: TripStats;
 }) {
   const router = useRouter();
   const [{ me, checked }, setParticipantState] = useState<{
@@ -85,6 +89,10 @@ export function TripVariantsView({
       </header>
 
       <main className="mx-auto w-full max-w-2xl flex-1 px-6 py-8">
+        <div className="mb-6 rounded-xl border border-[var(--border)] bg-[var(--surface)] p-4">
+          <TripStatsOverview stats={stats} />
+        </div>
+
         <div className="mb-6 flex justify-end gap-2">
           <button
             onClick={() => setShowVoters((v) => !v)}

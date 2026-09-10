@@ -3,16 +3,19 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { getStoredParticipant } from "@/lib/participant";
+import type { TripStats } from "@/lib/tripStats";
 import { NamePicker } from "./NamePicker";
 
 export function ShareEntry({
   shareToken,
   participants,
   redirectTo,
+  stats,
 }: {
   shareToken: string;
   participants: { id: string; name: string }[];
   redirectTo: string;
+  stats: TripStats;
 }) {
   const router = useRouter();
   const [{ stored, checked }, setStoredState] = useState<{
@@ -34,6 +37,11 @@ export function ShareEntry({
   if (!checked || stillValid) return null;
 
   return (
-    <NamePicker shareToken={shareToken} participants={participants} redirectTo={redirectTo} />
+    <NamePicker
+      shareToken={shareToken}
+      participants={participants}
+      redirectTo={redirectTo}
+      stats={stats}
+    />
   );
 }

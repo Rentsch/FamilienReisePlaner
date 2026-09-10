@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { getAdminUser } from "@/lib/auth";
 import { TripVariantsView } from "@/components/TripVariantsView";
+import { computeTripStats } from "@/lib/tripStats";
 
 export default async function TripVariantsPage({
   params,
@@ -23,6 +24,7 @@ export default async function TripVariantsPage({
           },
           orderBy: { createdAt: "asc" },
         },
+        _count: { select: { tripVehicles: true } },
       },
     }),
     getAdminUser(),
@@ -42,6 +44,12 @@ export default async function TripVariantsPage({
 
   const participants = trip.participants.map((p) => ({ id: p.id, name: p.person.name }));
 
+  const stats = computeTripStats({
+    participants: trip.participants,
+    vehicleCount: trip._count.tripVehicles,
+    variantCount: trip.variants.length,
+  });
+
   return (
     <TripVariantsView
       shareToken={shareToken}
@@ -51,6 +59,7 @@ export default async function TripVariantsPage({
       isAdminView={adminUser?.id === trip.adminUserId}
       participants={participants}
       variants={variants}
+      stats={stats}
     />
   );
 }
