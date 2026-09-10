@@ -37,6 +37,8 @@ export default async function ShareTokenPage({
       participants={participants}
       redirectTo={`/t/${shareToken}/trip`}
       stats={stats}
+      tripName={trip.name}
+      tripDate={trip.date}
     />
   );
 }

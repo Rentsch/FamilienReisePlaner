@@ -90,7 +90,7 @@ export function TripVariantsView({
 
       <main className="mx-auto w-full max-w-2xl flex-1 px-6 py-8">
         <div className="mb-6 rounded-xl border border-[var(--border)] bg-[var(--surface)] p-4">
-          <TripStatsOverview stats={stats} />
+          <TripStatsOverview stats={stats} hideVariantHint />
         </div>
 
         <div className="mb-6 flex justify-end gap-2">

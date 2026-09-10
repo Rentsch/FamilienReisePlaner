@@ -11,11 +11,15 @@ export function ShareEntry({
   participants,
   redirectTo,
   stats,
+  tripName,
+  tripDate,
 }: {
   shareToken: string;
   participants: { id: string; name: string }[];
   redirectTo: string;
   stats: TripStats;
+  tripName: string;
+  tripDate?: Date | string | null;
 }) {
   const router = useRouter();
   const [{ stored, checked }, setStoredState] = useState<{
@@ -42,6 +46,8 @@ export function ShareEntry({
       participants={participants}
       redirectTo={redirectTo}
       stats={stats}
+      tripName={tripName}
+      tripDate={tripDate}
     />
   );
 }
