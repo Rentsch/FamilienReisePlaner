@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
-import { addMinutesToTime, formatDurationHM } from "@/lib/time";
 import { getAdminUser } from "@/lib/auth";
+import { buildVehicleViews } from "@/lib/variantView";
 import { VariantDetail } from "@/components/VariantDetail";
 
 export default async function VariantDetailPage({
@@ -39,67 +39,7 @@ export default async function VariantDetailPage({
   });
   if (!variant || variant.tripId !== trip.id) notFound();
 
-  function formatTime(date: Date) {
-    return `${String(date.getUTCHours()).padStart(2, "0")}:${String(date.getUTCMinutes()).padStart(2, "0")}`;
-  }
-
-  const usedVehicleIds = new Set(variant.personAssignments.map((pa) => pa.tripVehicleId));
-  // Order by the trip's fixed vehicle list (not by first-appearance in this variant's
-  // assignments) so cars line up in the same order across every variant, making them
-  // easier to compare.
-  const orderedVehicleIds = trip.tripVehicles.map((tv) => tv.id).filter((id) => usedVehicleIds.has(id));
-
-  const vehicles = orderedVehicleIds.map((vehicleId) => {
-    const personAssignmentsForVehicle = variant.personAssignments.filter((pa) => pa.tripVehicleId === vehicleId);
-    const vehicle = personAssignmentsForVehicle[0].tripVehicle.vehicle;
-    const driver = personAssignmentsForVehicle.find((pa) => pa.isDriver);
-    const attachedTrailerAssignment = variant.trailerAssignments.find((ta) => ta.tripVehicleId === vehicleId);
-    const attachedTrailerId = attachedTrailerAssignment?.tripTrailerId;
-    const bikesOnTrailer = attachedTrailerId
-      ? variant.bikeAssignments.filter((ba) => ba.tripTrailerId === attachedTrailerId)
-      : [];
-
-    const trailerType = attachedTrailerAssignment?.tripTrailer.trailer.type;
-    const defaultMinutes = !trailerType
-      ? trip.travelTimeMinutes
-      : trailerType === "BIKE_RACK"
-        ? trip.travelTimeWithBikeTrailerMinutes
-        : trip.travelTimeWithCargoTrailerMinutes;
-
-    const plan = variant.vehiclePlans.find((p) => p.tripVehicleId === vehicleId);
-    const effectiveMinutes = plan?.travelTimeOverrideMinutes ?? defaultMinutes ?? null;
-    const departure = plan?.departureTime ? formatTime(plan.departureTime) : null;
-    const arrival =
-      departure && effectiveMinutes != null ? addMinutesToTime(departure, effectiveMinutes) : null;
-
-    return {
-      id: vehicleId,
-      name: vehicle.name,
-      frontSeats: vehicle.frontSeats,
-      seats: vehicle.seats,
-      driverName: driver?.tripParticipant.person.name ?? null,
-      front: personAssignmentsForVehicle
-        .filter((pa) => pa.row === "FRONT")
-        .map((pa) => ({
-          name: pa.tripParticipant.person.name,
-          photoUrl: pa.tripParticipant.person.photoUrl,
-          isDriver: pa.isDriver,
-        }))
-        // the driver always renders in the driver's seat (slot 0), matching the editor
-        .sort((a, b) => Number(b.isDriver) - Number(a.isDriver)),
-      back: personAssignmentsForVehicle
-        .filter((pa) => pa.row === "BACK")
-        .map((pa) => ({ name: pa.tripParticipant.person.name, photoUrl: pa.tripParticipant.person.photoUrl })),
-      trailerName: attachedTrailerAssignment?.tripTrailer.trailer.name ?? null,
-      trailerType: trailerType ?? null,
-      bikes: bikesOnTrailer.map((ba) => ({
-        name: ba.tripParticipant.person.name,
-      })),
-      departure,
-      arrival: arrival ? `${arrival.time}${arrival.nextDay ? " (+1 Tag)" : ""}` : null,
-      travelDuration: departure && effectiveMinutes != null ? formatDurationHM(effectiveMinutes) : null,
-    };
-  });
+  const vehicles = buildVehicleViews(trip, variant);
 
   return (
     <VariantDetail

@@ -9,28 +9,13 @@ import { formatTripDate } from "@/lib/time";
 import { voteForVariant } from "@/app/t/[shareToken]/actions";
 import { deleteVariant } from "@/app/t/[shareToken]/variant/actions";
 import { ConfirmDeleteButton } from "@/components/ConfirmDeleteButton";
+import type { VehicleView } from "@/lib/variantView";
 
 const SLOT_SIZE = 44;
 const BIKE_SLOT_SIZE = 30;
 // Fixed width the export image is rendered at, regardless of the device that triggers it,
 // so the exported PNG looks identical whether it's generated from a phone or a desktop.
 const EXPORT_WIDTH = 640;
-
-type VehicleView = {
-  id: string;
-  name: string;
-  frontSeats: number;
-  seats: number;
-  driverName: string | null;
-  front: { name: string; photoUrl: string | null; isDriver: boolean }[];
-  back: { name: string; photoUrl: string | null }[];
-  trailerName: string | null;
-  trailerType: "CARGO" | "BIKE_RACK" | null;
-  bikes: { name: string }[];
-  departure: string | null;
-  arrival: string | null;
-  travelDuration: string | null;
-};
 
 function Avatar({ name, photoUrl, size }: { name: string; photoUrl: string | null; size: number }) {
   if (photoUrl) {
