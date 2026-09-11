@@ -26,18 +26,16 @@ export function TrailerTypeAndCapacityFields({
         </select>
       </label>
 
-      {type === "BIKE_RACK" && (
-        <label className="flex flex-col gap-1 text-sm text-zinc-700 dark:text-zinc-300">
-          Kapazität (Fahrräder)
-          <input
-            name="capacity"
-            type="number"
-            min={0}
-            defaultValue={defaultCapacity ?? ""}
-            className="w-24 rounded border border-[var(--border)] px-3 py-2 dark:bg-[var(--surface)]"
-          />
-        </label>
-      )}
+      <label className="flex flex-col gap-1 text-sm text-zinc-700 dark:text-zinc-300">
+        Fahrrad-Kapazität (optional)
+        <input
+          name="capacity"
+          type="number"
+          min={0}
+          defaultValue={defaultCapacity ?? ""}
+          className="w-24 rounded border border-[var(--border)] px-3 py-2 dark:bg-[var(--surface)]"
+        />
+      </label>
     </>
   );
 }

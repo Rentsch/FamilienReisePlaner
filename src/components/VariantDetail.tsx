@@ -372,18 +372,18 @@ export function VariantDetail({
                     <div className="mt-4 h-11 w-px shrink-0 bg-[var(--border)]" />
                     <div className="flex shrink-0 flex-col gap-1">
                       <p className="text-[11px] text-zinc-500 dark:text-zinc-400">Kupplung</p>
-                      <div className="flex shrink-0 flex-col items-center gap-1 p-1.5 text-center">
+                      <div className="flex shrink-0 flex-col items-center gap-0.5 p-1 text-center">
                         <div
-                          style={{ width: SLOT_SIZE, height: SLOT_SIZE }}
+                          style={{ width: BIKE_SLOT_SIZE, height: BIKE_SLOT_SIZE }}
                           className="flex items-center justify-center rounded-full bg-[var(--surface)] text-zinc-500 dark:text-zinc-300"
                         >
                           {v.trailerType === "BIKE_RACK" ? (
-                            <IconBike size={SLOT_SIZE * 0.5} stroke={1.75} />
+                            <IconBike size={BIKE_SLOT_SIZE * 0.6} stroke={1.75} />
                           ) : (
-                            <IconCaravan size={SLOT_SIZE * 0.5} stroke={1.75} />
+                            <IconCaravan size={BIKE_SLOT_SIZE * 0.6} stroke={1.75} />
                           )}
                         </div>
-                        <span className="max-w-[120px] truncate text-xs text-zinc-700 dark:text-zinc-300">
+                        <span className="max-w-[70px] truncate text-[11px] text-zinc-700 dark:text-zinc-300">
                           {v.trailerName}
                         </span>
                       </div>

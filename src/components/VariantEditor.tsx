@@ -140,12 +140,14 @@ function ChipContent({
 function Chip({
   chip,
   selected,
+  dimmed,
   onClick,
   badge,
   size = AVATAR_SIZE,
 }: {
   chip: ChipData;
   selected: boolean;
+  dimmed?: boolean;
   onClick: () => void;
   badge?: React.ReactNode;
   size?: number;
@@ -166,7 +168,7 @@ function Chip({
       }}
       className={`relative flex shrink-0 flex-col items-center gap-1 rounded-lg p-1.5 text-center ${
         selected ? "ring-2 ring-accent" : ""
-      } ${isDragging ? "opacity-30" : ""}`}
+      } ${isDragging ? "opacity-30" : dimmed ? "opacity-40" : ""}`}
     >
       <ChipContent chip={chip} badge={badge} size={size} />
     </button>
@@ -469,7 +471,7 @@ function VehicleBlock({
         )}
       </div>
 
-      {attachedTrailer?.type === "BIKE_RACK" && (
+      {attachedTrailer && attachedTrailer.capacity != null && attachedTrailer.capacity > 0 && (
         <div className="pop-in mt-2 flex w-fit flex-col gap-1">
           <p className="text-[11px] text-zinc-500 dark:text-zinc-400">
             Fahrräder ({bikesOnAttached.length}/{attachedTrailer.capacity ?? 0})
@@ -624,7 +626,7 @@ function VariantEditorInner({
 
   function assignBike(participantId: string, trailerId: string) {
     const trailer = trailers.find((t) => t.id === trailerId);
-    if (!trailer || trailer.type !== "BIKE_RACK" || !trailerAssignment[trailerId]) return;
+    if (!trailer || !trailer.capacity || !trailerAssignment[trailerId]) return;
     const capacity = trailer.capacity ?? 0;
     const current = Object.entries(bikeAssignment).filter(
       ([pid, tid]) => tid === trailerId && pid !== participantId,
@@ -778,6 +780,8 @@ function VariantEditorInner({
   const { setNodeRef: setTrayRef, isOver: isOverTray } = useDroppable({ id: "tray" });
 
   const draggingPerson = draggingChip?.type === "person" ? participants.find((p) => p.id === draggingChip.id) ?? null : null;
+  // a front seat can't take backSeatOnly participants — dim them in the tray as a hint
+  const isFrontSeatSelected = selected?.kind === "seat" && selected.row === "FRONT";
 
   const unassignedPeople: ChipData[] = participants
     .filter((p) => !personAssignment[p.id])
@@ -939,9 +943,9 @@ function VariantEditorInner({
             })}
 
             {unassignedBikes.length > 0 &&
-              !trailers.some((t) => t.type === "BIKE_RACK" && trailerAssignment[t.id]) && (
+              !trailers.some((t) => t.capacity && trailerAssignment[t.id]) && (
                 <p className="rounded-lg bg-yellow-50 px-4 py-3 text-sm text-yellow-800 dark:bg-yellow-950 dark:text-yellow-300">
-                  Für Fahrräder muss zuerst ein Fahrradträger an ein Auto angehängt werden.
+                  Für Fahrräder muss zuerst ein Anhänger mit Fahrrad-Kapazität an ein Auto angehängt werden.
                 </p>
               )}
           </div>
@@ -975,6 +979,11 @@ function VariantEditorInner({
                   key={`${chip.type}:${chip.id}`}
                   chip={chip}
                   selected={selected?.kind === "chip" && selected.id === chip.id && selected.type === chip.type}
+                  dimmed={
+                    isFrontSeatSelected &&
+                    chip.type === "person" &&
+                    participants.find((p) => p.id === chip.id)?.backSeatOnly
+                  }
                   onClick={() => handleTrayChipClick(chip)}
                 />
               ))}
