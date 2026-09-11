@@ -3,7 +3,7 @@
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
-import { requireAdmin } from "@/lib/auth";
+import { getAdminUser } from "@/lib/auth";
 
 export type SeatRow = "FRONT" | "BACK";
 
@@ -12,7 +12,9 @@ export type SaveVariantInput = {
   tripId: string;
   variantId?: string; // set to update an existing variant instead of creating a new one
   name: string;
-  createdByParticipantId?: string; // required when creating, ignored when updating
+  // Required when creating (becomes the variant's creator). When updating, this
+  // identifies the caller so we can verify they're the creator (or the admin).
+  createdByParticipantId?: string;
   personAssignment: Record<string, { tripVehicleId: string; row: SeatRow }>; // participantId -> seat
   driverByVehicle: Record<string, string>; // tripVehicleId -> participantId
   bikeAssignment: Record<string, string>; // participantId -> tripTrailerId
@@ -55,6 +57,18 @@ export async function saveVariant(input: SaveVariantInput) {
   let variantId: string;
 
   if (input.variantId) {
+    const [existing, adminUser] = await Promise.all([
+      prisma.variant.findUnique({
+        where: { id: input.variantId },
+        select: { tripId: true, createdByParticipantId: true, trip: { select: { adminUserId: true } } },
+      }),
+      getAdminUser(),
+    ]);
+    if (!existing || existing.tripId !== input.tripId) throw new Error("Variante nicht gefunden");
+    const isAdmin = adminUser?.id === existing.trip.adminUserId;
+    const isCreator = !!input.createdByParticipantId && input.createdByParticipantId === existing.createdByParticipantId;
+    if (!isAdmin && !isCreator) throw new Error("Keine Berechtigung, diese Variante zu bearbeiten");
+
     await prisma.$transaction([
       prisma.personAssignment.deleteMany({ where: { variantId: input.variantId } }),
       prisma.bikeAssignment.deleteMany({ where: { variantId: input.variantId } }),
@@ -74,14 +88,19 @@ export async function saveVariant(input: SaveVariantInput) {
   redirect(`/t/${input.shareToken}/variant/${variantId}`);
 }
 
-export async function deleteVariant(shareToken: string, variantId: string) {
-  const user = await requireAdmin();
+export async function deleteVariant(shareToken: string, variantId: string, participantId?: string) {
+  const [variant, adminUser] = await Promise.all([
+    prisma.variant.findUnique({
+      where: { id: variantId },
+      select: { tripId: true, createdByParticipantId: true, trip: { select: { adminUserId: true } } },
+    }),
+    getAdminUser(),
+  ]);
+  if (!variant) return;
 
-  const variant = await prisma.variant.findUnique({
-    where: { id: variantId },
-    select: { tripId: true, trip: { select: { adminUserId: true } } },
-  });
-  if (!variant || variant.trip.adminUserId !== user.id) return;
+  const isAdmin = adminUser?.id === variant.trip.adminUserId;
+  const isCreator = !!participantId && participantId === variant.createdByParticipantId;
+  if (!isAdmin && !isCreator) return;
 
   await prisma.variant.delete({ where: { id: variantId } });
 

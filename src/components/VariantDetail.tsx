@@ -90,6 +90,7 @@ export function VariantDetail({
     id: string;
     name: string;
     creatorName: string;
+    createdByParticipantId: string;
     voteCount: number;
     voterParticipantIds: string[];
     vehicles: VehicleView[];
@@ -224,6 +225,8 @@ export function VariantDetail({
   if (!checked || (!isValid && !isAdminView)) return null;
 
   const isMyFavorite = !!me && variant.voterParticipantIds.includes(me.id);
+  const isCreator = !!me && me.id === variant.createdByParticipantId;
+  const canManage = isAdminView || isCreator;
 
   async function handleVote() {
     if (!me) return;
@@ -265,7 +268,7 @@ export function VariantDetail({
               <IconDownload size={16} stroke={1.75} />
               {exporting ? "Exportiere…" : "Export"}
             </button>
-            {isAdminView && (
+            {canManage && (
               <Link
                 href={`/t/${shareToken}/variant/${variant.id}/edit`}
                 className="rounded-full border border-[var(--border)] px-4 py-1.5 text-sm font-medium hover:bg-black/[.04] dark:hover:bg-white/[.06]"
@@ -273,10 +276,10 @@ export function VariantDetail({
                 Bearbeiten
               </Link>
             )}
-            {isAdminView && (
+            {canManage && (
               <ConfirmDeleteButton
                 action={async () => {
-                  await deleteVariant(shareToken, variant.id);
+                  await deleteVariant(shareToken, variant.id, me?.id);
                   router.push(`/t/${shareToken}/trip`);
                 }}
                 confirmMessage={<>Variante „{variant.name}“ wirklich löschen?</>}

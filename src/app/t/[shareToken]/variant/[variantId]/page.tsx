@@ -53,6 +53,7 @@ export default async function VariantDetailPage({
         id: variant.id,
         name: variant.name,
         creatorName: variant.createdBy.person.name,
+        createdByParticipantId: variant.createdByParticipantId,
         voteCount: variant.votes.length,
         voterParticipantIds: variant.votes.map((v) => v.tripParticipantId),
         vehicles,
