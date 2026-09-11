@@ -523,6 +523,7 @@ function VariantEditorInner({
   vehicles,
   trailers,
   tripTravelTimes,
+  defaultDepartureTime,
   me,
   initialVariant,
 }: {
@@ -533,6 +534,7 @@ function VariantEditorInner({
   vehicles: Vehicle[];
   trailers: Trailer[];
   tripTravelTimes: TripTravelTimes;
+  defaultDepartureTime?: string | null;
   me: { id: string; name: string } | null;
   initialVariant?: InitialVariant;
 }) {
@@ -549,9 +551,14 @@ function VariantEditorInner({
   const [trailerAssignment, setTrailerAssignment] = useState<Record<string, string>>(
     initialVariant?.trailerAssignment ?? {},
   );
-  const [departureByVehicle, setDepartureByVehicle] = useState<Record<string, string>>(
-    initialVariant?.departureByVehicle ?? {},
-  );
+  const [departureByVehicle, setDepartureByVehicle] = useState<Record<string, string>>(() => {
+    if (!defaultDepartureTime) return initialVariant?.departureByVehicle ?? {};
+    // Prefill every vehicle with the trip's default departure time; any time already
+    // saved for this variant (or entered below) takes precedence over the default.
+    const initial: Record<string, string> = {};
+    for (const v of vehicles) initial[v.id] = defaultDepartureTime;
+    return { ...initial, ...initialVariant?.departureByVehicle };
+  });
   const [travelTimeOverrideByVehicle, setTravelTimeOverrideByVehicle] = useState<Record<string, number>>(
     initialVariant?.travelTimeOverrideByVehicle ?? {},
   );
@@ -1002,6 +1009,7 @@ export function VariantEditor({
   vehicles,
   trailers,
   tripTravelTimes,
+  defaultDepartureTime,
   initialVariant,
 }: {
   shareToken: string;
@@ -1011,6 +1019,7 @@ export function VariantEditor({
   vehicles: Vehicle[];
   trailers: Trailer[];
   tripTravelTimes: TripTravelTimes;
+  defaultDepartureTime?: string | null;
   initialVariant?: InitialVariant;
 }) {
   const router = useRouter();
@@ -1047,6 +1056,7 @@ export function VariantEditor({
       vehicles={vehicles}
       trailers={trailers}
       tripTravelTimes={tripTravelTimes}
+      defaultDepartureTime={defaultDepartureTime}
       me={isValidParticipant ? me : null}
       initialVariant={initialVariant}
     />

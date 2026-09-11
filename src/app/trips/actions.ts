@@ -117,12 +117,15 @@ export async function updateTrip(id: string, formData: FormData) {
 export async function updateTripTravelTimes(id: string, formData: FormData) {
   const user = await requireAdmin();
 
+  const defaultDepartureTime = (formData.get("defaultDepartureTime") as string) || null;
+
   await prisma.trip.update({
     where: { id, adminUserId: user.id },
     data: {
       travelTimeMinutes: num(formData, "travelTimeMinutes"),
       travelTimeWithBikeTrailerMinutes: num(formData, "travelTimeWithBikeTrailerMinutes"),
       travelTimeWithCargoTrailerMinutes: num(formData, "travelTimeWithCargoTrailerMinutes"),
+      defaultDepartureTime,
     },
   });
 

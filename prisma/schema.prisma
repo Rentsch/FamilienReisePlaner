@@ -71,6 +71,9 @@ model Trip {
   travelTimeMinutes                 Int?
   travelTimeWithBikeTrailerMinutes  Int?
   travelTimeWithCargoTrailerMinutes Int?
+  // Prefilled as the departure time for every vehicle when a new variant is created;
+  // adjustable per vehicle within the variant itself. Stored as "HH:MM".
+  defaultDepartureTime              String?
 
   participants TripParticipant[]
   tripVehicles TripVehicle[]

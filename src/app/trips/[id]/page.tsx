@@ -126,6 +126,10 @@ export default async function TripDetailPage({
           <h2 className="mb-2 text-lg font-medium text-foreground">
             Fahrzeiten
           </h2>
+          <p className="mb-2 text-xs text-zinc-500 dark:text-zinc-400">
+            Die Standard-Abfahrtszeit wird bei einer neuen Variante für jedes Auto vorausgefüllt und kann dort pro
+            Auto angepasst werden.
+          </p>
           <form
             action={updateTripTravelTimes.bind(null, trip.id)}
             className="flex flex-wrap items-end gap-4 rounded-xl border border-[var(--border)] p-4"
@@ -157,6 +161,15 @@ export default async function TripDetailPage({
                 type="number"
                 min={0}
                 defaultValue={trip.travelTimeWithCargoTrailerMinutes ?? ""}
+                className="w-32 rounded border border-[var(--border)] px-3 py-2 dark:bg-[var(--surface)]"
+              />
+            </label>
+            <label className="flex flex-col gap-1 text-sm text-zinc-700 dark:text-zinc-300">
+              Standard-Abfahrtszeit
+              <input
+                name="defaultDepartureTime"
+                type="time"
+                defaultValue={trip.defaultDepartureTime ?? ""}
                 className="w-32 rounded border border-[var(--border)] px-3 py-2 dark:bg-[var(--surface)]"
               />
             </label>

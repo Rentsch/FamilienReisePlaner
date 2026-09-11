@@ -98,6 +98,7 @@ export default async function EditVariantPage({
         bikeTrailer: trip.travelTimeWithBikeTrailerMinutes,
         cargoTrailer: trip.travelTimeWithCargoTrailerMinutes,
       }}
+      defaultDepartureTime={trip.defaultDepartureTime}
     />
   );
 }
