@@ -51,12 +51,20 @@ export default async function TripDetailPage({
         </Link>
         <div className="mb-1 flex items-center justify-between gap-3">
           <h1 className="text-2xl font-semibold text-foreground">{trip.name}</h1>
-          <Link
-            href={`/trips/${trip.id}/edit`}
-            className="shrink-0 rounded-full border border-[var(--border)] px-4 py-1.5 text-sm font-medium hover:bg-black/[.04] dark:hover:bg-white/[.06]"
-          >
-            Bearbeiten
-          </Link>
+          <div className="flex shrink-0 gap-2">
+            <Link
+              href={`/trips/${trip.id}/schedule`}
+              className="rounded-full border border-[var(--border)] px-4 py-1.5 text-sm font-medium hover:bg-black/[.04] dark:hover:bg-white/[.06]"
+            >
+              Tagesablauf
+            </Link>
+            <Link
+              href={`/trips/${trip.id}/edit`}
+              className="rounded-full border border-[var(--border)] px-4 py-1.5 text-sm font-medium hover:bg-black/[.04] dark:hover:bg-white/[.06]"
+            >
+              Bearbeiten
+            </Link>
+          </div>
         </div>
         {formatTripDate(trip.date) && (
           <p className="mb-1 text-sm font-medium text-accent">{formatTripDate(trip.date)}</p>

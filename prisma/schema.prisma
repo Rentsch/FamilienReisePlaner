@@ -79,6 +79,22 @@ model Trip {
   tripVehicles TripVehicle[]
   tripTrailers TripTrailer[]
   variants     Variant[]
+  appointments Appointment[]
+}
+
+// A single entry in a trip's daily schedule ("Tagesablauf").
+model Appointment {
+  id        String   @id @default(cuid())
+  tripId    String
+  trip      Trip     @relation(fields: [tripId], references: [id], onDelete: Cascade)
+  date      DateTime @db.Date
+  startTime String // "HH:MM"
+  endTime   String // "HH:MM"
+  title     String
+  address   String
+  createdAt DateTime @default(now())
+
+  @@index([tripId, date])
 }
 
 model TripParticipant {
