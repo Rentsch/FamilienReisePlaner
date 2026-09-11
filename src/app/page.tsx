@@ -2,7 +2,7 @@ import Link from "next/link";
 import { getAdminUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { AdminNav } from "@/components/AdminNav";
-import { SubmitButton } from "@/components/SubmitButton";
+import { ConfirmDeleteButton } from "@/components/ConfirmDeleteButton";
 import { formatTripDate } from "@/lib/time";
 import { deleteTrip } from "./trips/actions";
 
@@ -60,14 +60,16 @@ export default async function Home() {
                   {trip.participants.length} Teilnehmer · {trip.variants.length} Varianten
                 </p>
               </Link>
-              <form action={deleteTrip.bind(null, trip.id)}>
-                <SubmitButton
-                  pendingText="Löschen…"
-                  className="shrink-0 text-sm text-red-600 hover:text-red-800 dark:text-red-400"
-                >
-                  Löschen
-                </SubmitButton>
-              </form>
+              <ConfirmDeleteButton
+                action={deleteTrip.bind(null, trip.id)}
+                confirmMessage={
+                  <>
+                    „{trip.name}“ wird inklusive aller Teilnehmer, Fahrzeuge, Anhänger und Varianten
+                    unwiderruflich gelöscht.
+                  </>
+                }
+                className="shrink-0 text-sm text-red-600 hover:text-red-800 dark:text-red-400"
+              />
             </li>
           ))}
           {trips.length === 0 && (

@@ -4,6 +4,7 @@ import { requireAdmin } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { AdminNav } from "@/components/AdminNav";
 import { SubmitButton } from "@/components/SubmitButton";
+import { ConfirmDeleteButton } from "@/components/ConfirmDeleteButton";
 import { createPerson, deletePerson } from "./actions";
 
 export default async function PeoplePage({
@@ -109,14 +110,11 @@ export default async function PeoplePage({
               >
                 Bearbeiten
               </Link>
-              <form action={deletePerson.bind(null, person.id)}>
-                <SubmitButton
-                  pendingText="Löschen…"
-                  className="text-sm text-red-600 hover:text-red-800 dark:text-red-400"
-                >
-                  Löschen
-                </SubmitButton>
-              </form>
+              <ConfirmDeleteButton
+                action={deletePerson.bind(null, person.id)}
+                confirmMessage={<>„{person.name}“ wirklich löschen?</>}
+                className="text-sm text-red-600 hover:text-red-800 dark:text-red-400"
+              />
             </li>
           ))}
           {people.length === 0 && (

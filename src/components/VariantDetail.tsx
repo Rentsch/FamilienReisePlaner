@@ -7,9 +7,14 @@ import { IconBike, IconCaravan, IconSteeringWheel, IconDownload } from "@tabler/
 import { getStoredParticipant } from "@/lib/participant";
 import { formatTripDate } from "@/lib/time";
 import { voteForVariant } from "@/app/t/[shareToken]/actions";
+import { deleteVariant } from "@/app/t/[shareToken]/variant/actions";
+import { ConfirmDeleteButton } from "@/components/ConfirmDeleteButton";
 
 const SLOT_SIZE = 44;
 const BIKE_SLOT_SIZE = 30;
+// Fixed width the export image is rendered at, regardless of the device that triggers it,
+// so the exported PNG looks identical whether it's generated from a phone or a desktop.
+const EXPORT_WIDTH = 640;
 
 type VehicleView = {
   id: string;
@@ -121,30 +126,62 @@ export function VariantDetail({
     setExporting(true);
     setExportError(null);
 
-    // Re-encode each already-rendered photo to a plain PNG data URI ourselves, using
-    // the browser's own decoded bitmap, and swap it in temporarily. html-to-image embeds
-    // <img> tags by re-fetching them, and some storage hosts serve photos (e.g. an
-    // iPhone .HEIC upload) with a generic content-type that the fetched-and-reconstructed
-    // <img> can't decode even though the live page renders it fine — that stalls the
-    // export indefinitely rather than failing. Pre-baked data URIs need no re-fetch.
-    const swapped: { el: HTMLImageElement; originalSrc: string }[] = [];
-    for (const img of Array.from(exportRef.current.querySelectorAll("img"))) {
-      if (!img.complete || !img.naturalWidth) continue;
+    const sourceImages = Array.from(exportRef.current.querySelectorAll("img"));
+    // Wait for every avatar photo to finish downloading before capturing anything — a
+    // photo that's still in flight (slow mobile connection) would otherwise silently be
+    // skipped below and end up missing from the export.
+    await Promise.all(
+      sourceImages.map(
+        (img) =>
+          img.complete ||
+          new Promise<void>((resolve) => {
+            img.addEventListener("load", () => resolve(), { once: true });
+            img.addEventListener("error", () => resolve(), { once: true });
+            setTimeout(resolve, 8000);
+          }),
+      ),
+    );
+
+    // Render the export from a fixed-width off-screen clone rather than the live,
+    // on-screen node. The on-screen layout wraps differently depending on the viewport
+    // it's rendered in, which used to make the exported image differ (or silently drop
+    // content) depending on whether it was triggered from a phone or a desktop.
+    // Capturing a clone pinned to a constant width keeps the export identical everywhere.
+    const host = document.createElement("div");
+    host.style.position = "fixed";
+    host.style.top = "0";
+    host.style.left = "-99999px";
+    host.style.width = `${EXPORT_WIDTH}px`;
+    host.style.pointerEvents = "none";
+    const clone = exportRef.current.cloneNode(true) as HTMLDivElement;
+    clone.style.width = `${EXPORT_WIDTH}px`;
+    host.appendChild(clone);
+    document.body.appendChild(host);
+
+    // Re-encode each already-loaded photo to a plain PNG data URI ourselves, using the
+    // browser's own decoded bitmap, and use that in the clone instead of the original
+    // <img> src. html-to-image embeds <img> tags by re-fetching them, and some storage
+    // hosts serve photos (e.g. an iPhone .HEIC upload) with a generic content-type that
+    // the fetched-and-reconstructed <img> can't decode even though the live page renders
+    // it fine — that stalls the export indefinitely rather than failing. Pre-baked data
+    // URIs need no re-fetch.
+    const cloneImages = clone.querySelectorAll("img");
+    sourceImages.forEach((img, i) => {
+      const cloneImg = cloneImages[i];
+      if (!cloneImg || !img.complete || !img.naturalWidth) return;
       try {
         const canvas = document.createElement("canvas");
         canvas.width = img.naturalWidth;
         canvas.height = img.naturalHeight;
         const ctx = canvas.getContext("2d");
-        if (!ctx) continue;
+        if (!ctx) return;
         ctx.drawImage(img, 0, 0);
-        const pngDataUrl = canvas.toDataURL("image/png");
-        swapped.push({ el: img, originalSrc: img.src });
-        img.src = pngDataUrl;
+        cloneImg.src = canvas.toDataURL("image/png");
       } catch {
-        // couldn't re-encode this one (e.g. a tainted canvas) — leave it as-is and let
-        // html-to-image's own embedding attempt it
+        // couldn't re-encode this one (e.g. a tainted canvas) — leave the clone's <img>
+        // pointing at the original URL and let html-to-image's own embedding attempt it
       }
-    }
+    });
 
     try {
       const { toPng } = await import("html-to-image");
@@ -152,7 +189,7 @@ export function VariantDetail({
         .getPropertyValue("--background")
         .trim();
       const dataUrl = await Promise.race([
-        toPng(exportRef.current, { backgroundColor: backgroundColor || undefined, pixelRatio: 2 }),
+        toPng(clone, { backgroundColor: backgroundColor || undefined, pixelRatio: 2 }),
         new Promise<never>((_, reject) => setTimeout(() => reject(new Error("export timed out")), 20000)),
       ]);
       const slug = (s: string) => s.trim().replace(/[^\p{L}\p{N}]+/gu, "-").replace(/^-+|-+$/g, "");
@@ -183,7 +220,7 @@ export function VariantDetail({
       console.error("Variant export failed", e);
       setExportError("Export fehlgeschlagen. Versuch's nochmal.");
     } finally {
-      for (const { el, originalSrc } of swapped) el.src = originalSrc;
+      host.remove();
       setExporting(false);
     }
   }
@@ -251,6 +288,16 @@ export function VariantDetail({
                 Bearbeiten
               </Link>
             )}
+            {isAdminView && (
+              <ConfirmDeleteButton
+                action={async () => {
+                  await deleteVariant(shareToken, variant.id);
+                  router.push(`/t/${shareToken}/trip`);
+                }}
+                confirmMessage={<>Variante „{variant.name}“ wirklich löschen?</>}
+                className="rounded-full border border-[var(--border)] px-4 py-1.5 text-sm font-medium text-red-600 hover:bg-black/[.04] dark:text-red-400 dark:hover:bg-white/[.06]"
+              />
+            )}
           </div>
         </div>
         {exportError && (
@@ -292,7 +339,7 @@ export function VariantDetail({
                 )}
               </div>
 
-              <div className="flex items-start gap-3 overflow-x-auto pb-1">
+              <div className="flex flex-wrap items-start gap-3 pb-1">
                 <div className="flex shrink-0 flex-col gap-1">
                   <p className="text-[11px] text-zinc-500 dark:text-zinc-400">
                     Vorne ({v.front.length}/{v.frontSeats})

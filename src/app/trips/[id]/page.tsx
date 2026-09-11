@@ -6,8 +6,10 @@ import { prisma } from "@/lib/prisma";
 import { AdminNav } from "@/components/AdminNav";
 import { CopyLinkButton } from "@/components/CopyLinkButton";
 import { SubmitButton } from "@/components/SubmitButton";
+import { ConfirmDeleteButton } from "@/components/ConfirmDeleteButton";
 import { formatTripDate } from "@/lib/time";
 import { updateTripTravelTimes } from "../actions";
+import { deleteVariant } from "@/app/t/[shareToken]/variant/actions";
 
 export default async function TripDetailPage({
   params,
@@ -200,6 +202,11 @@ export default async function TripDetailPage({
                 >
                   Bearbeiten
                 </Link>
+                <ConfirmDeleteButton
+                  action={deleteVariant.bind(null, trip.shareToken, variant.id)}
+                  confirmMessage={<>Variante „{variant.name}“ wirklich löschen?</>}
+                  className="shrink-0 text-xs font-medium text-red-600 hover:text-red-800 dark:text-red-400"
+                />
               </li>
             ))}
             {trip.variants.length === 0 && (

@@ -1,7 +1,9 @@
 "use server";
 
 import { redirect } from "next/navigation";
+import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
+import { requireAdmin } from "@/lib/auth";
 
 export type SeatRow = "FRONT" | "BACK";
 
@@ -70,4 +72,19 @@ export async function saveVariant(input: SaveVariantInput) {
   }
 
   redirect(`/t/${input.shareToken}/variant/${variantId}`);
+}
+
+export async function deleteVariant(shareToken: string, variantId: string) {
+  const user = await requireAdmin();
+
+  const variant = await prisma.variant.findUnique({
+    where: { id: variantId },
+    select: { tripId: true, trip: { select: { adminUserId: true } } },
+  });
+  if (!variant || variant.trip.adminUserId !== user.id) return;
+
+  await prisma.variant.delete({ where: { id: variantId } });
+
+  revalidatePath(`/trips/${variant.tripId}`);
+  revalidatePath(`/t/${shareToken}/trip`);
 }

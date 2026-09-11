@@ -3,6 +3,7 @@ import { requireAdmin } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { AdminNav } from "@/components/AdminNav";
 import { SubmitButton } from "@/components/SubmitButton";
+import { ConfirmDeleteButton } from "@/components/ConfirmDeleteButton";
 import { TrailerTypeAndCapacityFields } from "@/components/TrailerTypeAndCapacityFields";
 import { createTrailer, deleteTrailer } from "./actions";
 
@@ -76,14 +77,11 @@ export default async function TrailersPage({
               >
                 Bearbeiten
               </Link>
-              <form action={deleteTrailer.bind(null, trailer.id)}>
-                <SubmitButton
-                  pendingText="Löschen…"
-                  className="text-sm text-red-600 hover:text-red-800 dark:text-red-400"
-                >
-                  Löschen
-                </SubmitButton>
-              </form>
+              <ConfirmDeleteButton
+                action={deleteTrailer.bind(null, trailer.id)}
+                confirmMessage={<>„{trailer.name}“ wirklich löschen?</>}
+                className="text-sm text-red-600 hover:text-red-800 dark:text-red-400"
+              />
             </li>
           ))}
           {trailers.length === 0 && (

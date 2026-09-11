@@ -3,6 +3,7 @@ import { requireAdmin } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { AdminNav } from "@/components/AdminNav";
 import { SubmitButton } from "@/components/SubmitButton";
+import { ConfirmDeleteButton } from "@/components/ConfirmDeleteButton";
 import { createVehicle, deleteVehicle } from "./actions";
 
 export default async function VehiclesPage({
@@ -98,14 +99,11 @@ export default async function VehiclesPage({
               >
                 Bearbeiten
               </Link>
-              <form action={deleteVehicle.bind(null, vehicle.id)}>
-                <SubmitButton
-                  pendingText="Löschen…"
-                  className="text-sm text-red-600 hover:text-red-800 dark:text-red-400"
-                >
-                  Löschen
-                </SubmitButton>
-              </form>
+              <ConfirmDeleteButton
+                action={deleteVehicle.bind(null, vehicle.id)}
+                confirmMessage={<>„{vehicle.name}“ wirklich löschen?</>}
+                className="text-sm text-red-600 hover:text-red-800 dark:text-red-400"
+              />
             </li>
           ))}
           {vehicles.length === 0 && (
