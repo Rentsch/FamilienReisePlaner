@@ -53,7 +53,7 @@ export default async function TripDetailPage({
           <h1 className="text-2xl font-semibold text-foreground">{trip.name}</h1>
           <div className="flex shrink-0 gap-2">
             <Link
-              href={`/trips/${trip.id}/schedule`}
+              href={`/t/${trip.shareToken}/schedule`}
               className="rounded-full border border-[var(--border)] px-4 py-1.5 text-sm font-medium hover:bg-black/[.04] dark:hover:bg-white/[.06]"
             >
               Tagesablauf
