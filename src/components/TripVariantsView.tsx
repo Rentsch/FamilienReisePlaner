@@ -44,7 +44,6 @@ export function TripVariantsView({
     checked: boolean;
   }>({ me: null, checked: false });
   const [pending, setPending] = useState(false);
-  const [showVoters, setShowVoters] = useState(false);
   const participantNameById = new Map(participants.map((p) => [p.id, p.name]));
 
   useEffect(() => {
@@ -94,16 +93,6 @@ export function TripVariantsView({
         </div>
 
         <div className="mb-6 flex justify-end gap-1.5 sm:gap-2">
-          <button
-            onClick={() => setShowVoters((v) => !v)}
-            className={`rounded-full border px-3 py-2 text-xs font-medium sm:px-4 sm:text-sm ${
-              showVoters
-                ? "border-accent bg-accent/10 text-accent"
-                : "border-[var(--border)] hover:bg-black/[.04] dark:hover:bg-white/[.06]"
-            }`}
-          >
-            Abstimmung
-          </button>
           {variants.length >= 2 && (
             <Link
               href={`/t/${shareToken}/compare`}
@@ -144,16 +133,9 @@ export function TripVariantsView({
                       von {variant.creatorName} · {variant.usedVehicles} Auto
                       {variant.usedVehicles !== 1 && "s"} genutzt · {variant.voteCount} Stimme
                       {variant.voteCount !== 1 && "n"}
+                      {variant.voterParticipantIds.length > 0 &&
+                        ` (${variant.voterParticipantIds.map((id) => participantNameById.get(id) ?? "?").join(", ")})`}
                     </p>
-                    {showVoters && (
-                      <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
-                        {variant.voterParticipantIds.length > 0
-                          ? variant.voterParticipantIds
-                              .map((id) => participantNameById.get(id) ?? "?")
-                              .join(", ")
-                          : "Noch niemand"}
-                      </p>
-                    )}
                   </Link>
                   <div className="flex shrink-0 gap-2">
                     <Link
