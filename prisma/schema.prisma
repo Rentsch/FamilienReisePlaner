@@ -94,7 +94,22 @@ model Appointment {
   address   String
   createdAt DateTime @default(now())
 
+  attachments AppointmentAttachment[]
+
   @@index([tripId, date])
+}
+
+// A file (image or PDF) attached to a schedule entry, stored in Supabase Storage.
+model AppointmentAttachment {
+  id            String      @id @default(cuid())
+  appointmentId String
+  appointment   Appointment @relation(fields: [appointmentId], references: [id], onDelete: Cascade)
+  url           String
+  filename      String
+  mimeType      String
+  createdAt     DateTime    @default(now())
+
+  @@index([appointmentId])
 }
 
 model TripParticipant {

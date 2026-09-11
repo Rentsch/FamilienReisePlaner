@@ -2,7 +2,7 @@
 
 import { useRef, useState } from "react";
 import Link from "next/link";
-import { IconDownload, IconMapPin, IconPencil, IconPlus } from "@tabler/icons-react";
+import { IconDownload, IconFileTypePdf, IconMapPin, IconPencil, IconPlus } from "@tabler/icons-react";
 import { ConfirmDeleteButton } from "@/components/ConfirmDeleteButton";
 import { AppointmentModal, type AppointmentInitial } from "@/components/AppointmentModal";
 import { createAppointment, deleteAppointment, updateAppointment } from "@/app/t/[shareToken]/schedule/actions";
@@ -11,6 +11,8 @@ import { createAppointment, deleteAppointment, updateAppointment } from "@/app/t
 // so the exported PNG looks identical whether it's generated from a phone or a desktop.
 const EXPORT_WIDTH = 640;
 
+type Attachment = { id: string; url: string; filename: string; mimeType: string };
+
 type Appointment = {
   id: string;
   date: Date;
@@ -18,6 +20,7 @@ type Appointment = {
   endTime: string;
   title: string;
   address: string;
+  attachments: Attachment[];
 };
 
 function toDateKey(date: Date) {
@@ -195,6 +198,28 @@ export function ScheduleClient({
                         <IconMapPin size={14} stroke={1.75} className="shrink-0" />
                         <span className="break-words">{appointment.address}</span>
                       </a>
+                      {appointment.attachments.length > 0 && (
+                        <ul data-export-hide className="mt-2 flex flex-wrap gap-1.5">
+                          {appointment.attachments.map((a) => (
+                            <li key={a.id}>
+                              <a href={a.url} target="_blank" rel="noopener noreferrer" title={a.filename}>
+                                {a.mimeType.startsWith("image/") ? (
+                                  // eslint-disable-next-line @next/next/no-img-element
+                                  <img
+                                    src={a.url}
+                                    alt={a.filename}
+                                    className="h-12 w-12 rounded-lg border border-[var(--border)] object-cover"
+                                  />
+                                ) : (
+                                  <div className="flex h-12 w-12 items-center justify-center rounded-lg border border-[var(--border)] hover:bg-black/[.04] dark:hover:bg-white/[.06]">
+                                    <IconFileTypePdf size={18} stroke={1.5} />
+                                  </div>
+                                )}
+                              </a>
+                            </li>
+                          ))}
+                        </ul>
+                      )}
                     </div>
                     <div data-export-hide className="flex shrink-0 gap-1">
                       <AppointmentModal
@@ -236,5 +261,6 @@ function toInitial(appointment: Appointment): AppointmentInitial {
     endTime: appointment.endTime,
     title: appointment.title,
     address: appointment.address,
+    attachments: appointment.attachments,
   };
 }

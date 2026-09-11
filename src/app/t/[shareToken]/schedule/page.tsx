@@ -17,7 +17,10 @@ export default async function TripSchedulePage({
         id: true,
         name: true,
         adminUserId: true,
-        appointments: { orderBy: [{ date: "asc" }, { startTime: "asc" }] },
+        appointments: {
+          orderBy: [{ date: "asc" }, { startTime: "asc" }],
+          include: { attachments: { orderBy: { createdAt: "asc" } } },
+        },
       },
     }),
     getAdminUser(),
