@@ -14,7 +14,7 @@ export default async function VariantDetailPage({
   const [trip, adminUser] = await Promise.all([
     prisma.trip.findUnique({
       where: { shareToken },
-      include: { participants: true },
+      include: { participants: true, tripVehicles: { orderBy: { id: "asc" } } },
     }),
     getAdminUser(),
   ]);
@@ -44,8 +44,12 @@ export default async function VariantDetailPage({
   }
 
   const usedVehicleIds = new Set(variant.personAssignments.map((pa) => pa.tripVehicleId));
+  // Order by the trip's fixed vehicle list (not by first-appearance in this variant's
+  // assignments) so cars line up in the same order across every variant, making them
+  // easier to compare.
+  const orderedVehicleIds = trip.tripVehicles.map((tv) => tv.id).filter((id) => usedVehicleIds.has(id));
 
-  const vehicles = [...usedVehicleIds].map((vehicleId) => {
+  const vehicles = orderedVehicleIds.map((vehicleId) => {
     const personAssignmentsForVehicle = variant.personAssignments.filter((pa) => pa.tripVehicleId === vehicleId);
     const vehicle = personAssignmentsForVehicle[0].tripVehicle.vehicle;
     const driver = personAssignmentsForVehicle.find((pa) => pa.isDriver);

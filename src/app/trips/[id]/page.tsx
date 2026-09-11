@@ -23,7 +23,7 @@ export default async function TripDetailPage({
     where: { id, adminUserId: user.id },
     include: {
       participants: { include: { person: true } },
-      tripVehicles: { include: { vehicle: true } },
+      tripVehicles: { include: { vehicle: true }, orderBy: { id: "asc" } },
       tripTrailers: { include: { trailer: true } },
       variants: {
         include: { votes: true },

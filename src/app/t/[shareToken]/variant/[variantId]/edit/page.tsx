@@ -15,7 +15,7 @@ export default async function EditVariantPage({
       where: { shareToken },
       include: {
         participants: { include: { person: true } },
-        tripVehicles: { include: { vehicle: true } },
+        tripVehicles: { include: { vehicle: true }, orderBy: { id: "asc" } },
         tripTrailers: { include: { trailer: true } },
       },
     }),
