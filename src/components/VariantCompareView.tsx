@@ -51,21 +51,36 @@ function cellValue(row: Row, v: VehicleView | undefined): string | null {
     case "back":
       return v.back[row.index]?.name ?? null;
     case "trailer":
-      if (!v.trailerName) return null;
-      return v.bikes.length > 0 ? `${v.trailerName}|${v.bikes.map((b) => b.name).join(",")}` : v.trailerName;
+      // Just the bike count, not who they belong to — that level of detail isn't needed here.
+      return v.trailerName ? `${v.trailerName}|${v.bikes.length}` : null;
     case "departure":
       return v.departure ? `${v.departure}|${v.arrival ?? ""}|${v.travelDuration ?? ""}` : null;
   }
 }
 
 function cellLabel(row: Row, v: VehicleView | undefined): string {
-  if (row.kind === "trailer") return v?.trailerName ?? "–";
+  if (row.kind === "trailer") {
+    if (!v?.trailerName) return "–";
+    return v.bikes.length > 0 ? `${v.trailerName} (${v.bikes.length})` : v.trailerName;
+  }
   if (row.kind === "departure") {
     if (!v?.departure) return "–";
     return v.arrival ? `${v.departure} → ${v.arrival}` : v.departure;
   }
   const value = cellValue(row, v);
   return value ?? "–";
+}
+
+function isSeatRow(kind: Row["kind"]): boolean {
+  return kind === "driver" || kind === "front" || kind === "back";
+}
+
+// The set of every person seated anywhere in this vehicle (driver included) — used to decide
+// whether "different people in the car" counts as a change independent of which exact seat
+// they landed in (front/back has no stored left/right seat identity anyway).
+function occupantSet(v: VehicleView): Set<string> {
+  const names = [v.driverName, ...frontOccupants(v).map((p) => p.name), ...v.back.map((p) => p.name)];
+  return new Set(names.filter((n): n is string => n !== null));
 }
 
 export function VariantCompareView({
@@ -95,6 +110,7 @@ export function VariantCompareView({
     checked: boolean;
   }>({ me: null, checked: false });
   const [selectedIds, setSelectedIds] = useState(initialSelectedIds);
+  const [strictSeats, setStrictSeats] = useState(false);
 
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect -- deliberate post-mount localStorage read to avoid a hydration mismatch
@@ -155,6 +171,20 @@ export function VariantCompareView({
       </header>
 
       <main className="flex-1 px-4 py-6">
+        <label className="mb-3 flex max-w-4xl items-start gap-2 text-sm text-zinc-600 dark:text-zinc-300">
+          <input
+            type="checkbox"
+            checked={strictSeats}
+            onChange={(e) => setStrictSeats(e.target.checked)}
+            className="mt-0.5 h-4 w-4 shrink-0 accent-accent"
+          />
+          <span>
+            Sitzplatz genau vergleichen
+            <span className="block text-xs text-zinc-500 dark:text-zinc-400">
+              Aus: es zählt nur, wer im Auto sitzt — welcher Platz genau ist egal.
+            </span>
+          </span>
+        </label>
         {/* A bounded, self-scrolling box (both axes) rather than relying on page scroll — that's
             what lets the variant-selector header actually stay pinned via `sticky top-0` while
             scrolling down through many vehicles, and keeps extra columns scrollable sideways. */}
@@ -212,6 +242,13 @@ export function VariantCompareView({
               {orderedVehicleIds.map((vehicleId, vehicleIdx) => {
                 const byColumn = selectedIds.map((id) => variantById.get(id)?.vehicles.find((v) => v.id === vehicleId));
                 const meta = byColumn.find((v): v is VehicleView => v !== undefined)!;
+                const usedCols = byColumn.filter((v): v is VehicleView => v !== undefined);
+                // Names shared by every compared (used) variant for this vehicle — the basis for
+                // the lenient "different people in the car" mode, where the exact seat doesn't matter.
+                const commonNames =
+                  usedCols.length > 0
+                    ? usedCols.map(occupantSet).reduce((acc, s) => new Set([...acc].filter((n) => s.has(n))))
+                    : new Set<string>();
                 const rows: Row[] = [
                   { kind: "driver" },
                   ...Array.from({ length: Math.max(0, meta.frontSeats - 1) }, (_, i) => ({ kind: "front" as const, index: i })),
@@ -231,25 +268,33 @@ export function VariantCompareView({
                       </td>
                     </tr>
                     {rows.map((row, rowIdx) => {
-                      const usedValues = byColumn
-                        .filter((v): v is VehicleView => v !== undefined)
-                        .map((v) => cellValue(row, v));
-                      const differs = usedValues.length > 1 && !usedValues.every((val) => val === usedValues[0]);
+                      const usedValues = usedCols.map((v) => cellValue(row, v));
+                      const allEqual = usedValues.length <= 1 || usedValues.every((val) => val === usedValues[0]);
+                      const lenientSeatRow = isSeatRow(row.kind) && !strictSeats;
                       const isFirstRow = rowIdx === 0;
                       const isLastRow = rowIdx === rows.length - 1;
 
                       return (
                         <tr
                           key={`${vehicleId}-${row.kind}-${"index" in row ? row.index : ""}`}
-                          className={`${differs ? "bg-amber-400/20" : ""} ${
+                          className={`${
                             row.kind === "trailer" || row.kind === "departure" ? "border-t border-[var(--border)]" : ""
                           } ${isFirstRow ? "border-t border-[var(--border)]" : ""}`}
                         >
                           {byColumn.map((v, colIndex) => {
                             const used = v !== undefined;
                             const icon = used ? rowIcon(row.kind, v?.trailerType) : null;
+                            const value = used ? cellValue(row, v) : null;
+                            const differs = !used
+                              ? false
+                              : lenientSeatRow
+                                ? value !== null && !commonNames.has(value)
+                                : !allEqual;
                             return (
-                              <td key={colIndex} className={`px-2 py-1.5 ${isLastRow ? "pb-3" : ""}`}>
+                              <td
+                                key={colIndex}
+                                className={`px-2 py-1.5 ${isLastRow ? "pb-3" : ""} ${differs ? "bg-amber-400/20" : ""}`}
+                              >
                                 {!used ? (
                                   isFirstRow ? (
                                     <span className="text-xs italic text-zinc-500 dark:text-zinc-400">

@@ -93,24 +93,28 @@ export function TripVariantsView({
           <TripStatsOverview stats={stats} hideVariantHint />
         </div>
 
-        <div className="mb-6 flex flex-wrap justify-end gap-2">
+        <div className="mb-6 flex justify-end gap-1.5 sm:gap-2">
           <button
             onClick={() => setShowVoters((v) => !v)}
-            className="rounded-full border border-[var(--border)] px-4 py-2 text-sm font-medium hover:bg-black/[.04] dark:hover:bg-white/[.06]"
+            className={`rounded-full border px-3 py-2 text-xs font-medium sm:px-4 sm:text-sm ${
+              showVoters
+                ? "border-accent bg-accent/10 text-accent"
+                : "border-[var(--border)] hover:bg-black/[.04] dark:hover:bg-white/[.06]"
+            }`}
           >
-            {showVoters ? "Stimmen ausblenden" : "Wer hat abgestimmt?"}
+            Abstimmung
           </button>
           {variants.length >= 2 && (
             <Link
               href={`/t/${shareToken}/compare`}
-              className="rounded-full border border-[var(--border)] px-4 py-2 text-sm font-medium hover:bg-black/[.04] dark:hover:bg-white/[.06]"
+              className="rounded-full border border-[var(--border)] px-3 py-2 text-xs font-medium hover:bg-black/[.04] sm:px-4 sm:text-sm dark:hover:bg-white/[.06]"
             >
-              Varianten vergleichen
+              Vergleich
             </Link>
           )}
           <Link
             href={`/t/${shareToken}/variant/new`}
-            className="rounded-full bg-accent px-5 py-2 text-sm font-medium text-accent-foreground hover:brightness-110"
+            className="rounded-full bg-accent px-3 py-2 text-xs font-medium text-accent-foreground hover:brightness-110 sm:px-5 sm:text-sm"
           >
             Neue Variante
           </Link>
