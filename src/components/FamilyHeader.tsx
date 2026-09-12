@@ -27,7 +27,7 @@ export function FamilyHeader({
             ← {backLabel}
           </Link>
         )}
-        <span className="truncate font-semibold text-foreground">Familien Reise</span>
+        <span className="truncate font-semibold text-foreground">Familien Reise Planer</span>
       </div>
       {isAdminView && tripId && (
         <Link
