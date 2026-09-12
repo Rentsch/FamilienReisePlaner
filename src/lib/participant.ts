@@ -17,3 +17,7 @@ export function getStoredParticipant(shareToken: string): StoredParticipant | nu
 export function setStoredParticipant(shareToken: string, participant: StoredParticipant) {
   localStorage.setItem(key(shareToken), JSON.stringify(participant));
 }
+
+export function clearStoredParticipant(shareToken: string) {
+  localStorage.removeItem(key(shareToken));
+}

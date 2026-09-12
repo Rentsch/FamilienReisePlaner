@@ -77,6 +77,7 @@ export function PackingListView({
   return (
     <div className="flex flex-1 flex-col bg-background">
       <FamilyHeader
+        shareToken={shareToken}
         className="print:hidden"
         backHref={`/t/${shareToken}/trip`}
         backLabel="Zurück zur Reise"

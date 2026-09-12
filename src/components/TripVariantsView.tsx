@@ -71,21 +71,22 @@ export function TripVariantsView({
 
   return (
     <div className="flex flex-1 flex-col bg-background">
-      <FamilyHeader isAdminView={isAdminView} tripId={tripId} />
+      <FamilyHeader shareToken={shareToken} isAdminView={isAdminView} tripId={tripId} />
 
       <main className="mx-auto w-full max-w-2xl flex-1 px-6 py-8">
-        <div className="mb-3 flex flex-col items-center justify-center gap-1 rounded-xl border border-[var(--border)] bg-[var(--surface)] p-5 text-center">
-          <span className="text-2xl" aria-hidden>
-            🗺️
-          </span>
-          <span className="text-base font-semibold text-foreground">{tripName}</span>
-          {formatTripDate(tripDate) && (
-            <span className="text-xs text-zinc-500 dark:text-zinc-400">{formatTripDate(tripDate)}</span>
-          )}
-        </div>
-
-        <div className="mb-6 rounded-xl border border-[var(--border)] bg-[var(--surface)] p-4">
-          <TripStatsOverview stats={stats} hideVariantHint />
+        <div className="mb-6 flex flex-col items-center gap-3 rounded-xl border border-[var(--border)] bg-[var(--surface)] p-5 text-center">
+          <div className="flex flex-col items-center gap-1">
+            <span className="text-2xl" aria-hidden>
+              🗺️
+            </span>
+            <span className="text-base font-semibold text-foreground">{tripName}</span>
+            {formatTripDate(tripDate) && (
+              <span className="text-xs text-zinc-500 dark:text-zinc-400">{formatTripDate(tripDate)}</span>
+            )}
+          </div>
+          <div className="w-full border-t border-[var(--border)] pt-3">
+            <TripStatsOverview stats={stats} hideVariantHint />
+          </div>
         </div>
 
         <div className="mb-6 grid grid-cols-2 gap-3">

@@ -127,6 +127,7 @@ export function ScheduleClient({
   return (
     <div className="flex flex-1 flex-col bg-background">
       <FamilyHeader
+        shareToken={shareToken}
         backHref={`/t/${shareToken}/trip`}
         backLabel="Zurück zur Reise"
         isAdminView={isAdminView}
