@@ -59,8 +59,31 @@ export async function setPackingItemPacked(
 ) {
   const trip = await resolveTrip(shareToken);
 
+  // Family members share one packing list, so anyone in the same family as
+  // the claimer may also check items off — not just the claimer themself.
+  const [actingParticipant, item] = await Promise.all([
+    prisma.tripParticipant.findUnique({
+      where: { id: participantId },
+      select: { person: { select: { familyId: true } } },
+    }),
+    prisma.tripPackingItem.findUnique({
+      where: { id: itemId, tripId: trip.id },
+      select: {
+        claimedByParticipantId: true,
+        claimedBy: { select: { person: { select: { familyId: true } } } },
+      },
+    }),
+  ]);
+  if (!item) return;
+
+  const actingFamilyId = actingParticipant?.person.familyId ?? null;
+  const claimedByFamilyId = item.claimedBy?.person.familyId ?? null;
+  const sameFamily = actingFamilyId !== null && actingFamilyId === claimedByFamilyId;
+  const isClaimer = item.claimedByParticipantId === participantId;
+  if (!isClaimer && !sameFamily) return;
+
   await prisma.tripPackingItem.updateMany({
-    where: { id: itemId, tripId: trip.id, claimedByParticipantId: participantId },
+    where: { id: itemId, tripId: trip.id },
     data: { isPacked: packed },
   });
   revalidatePackingPaths(shareToken);

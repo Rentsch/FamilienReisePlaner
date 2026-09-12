@@ -11,7 +11,11 @@ type PackingItem = {
   name: string;
   isPacked: boolean;
   claimedByParticipantId: string | null;
+  claimedByFamilyId: string | null;
+  claimedByName: string | null;
 };
+
+type Participant = { id: string; name: string; familyId: string | null; familyName: string | null };
 
 export function MyPackingListView({
   shareToken,
@@ -25,7 +29,7 @@ export function MyPackingListView({
   tripId: string;
   tripName: string;
   isAdminView?: boolean;
-  participants: { id: string; name: string }[];
+  participants: Participant[];
   items: PackingItem[];
 }) {
   const router = useRouter();
@@ -47,7 +51,12 @@ export function MyPackingListView({
 
   if (!checked || !isValid || !me) return null;
 
-  const myItems = items.filter((item) => item.claimedByParticipantId === me.id);
+  const myParticipant = participants.find((p) => p.id === me.id);
+  const myFamilyId = myParticipant?.familyId ?? null;
+  const myItems = myFamilyId
+    ? items.filter((item) => item.claimedByFamilyId === myFamilyId)
+    : items.filter((item) => item.claimedByParticipantId === me.id);
+  const title = myFamilyId && myParticipant?.familyName ? `Packliste – ${myParticipant.familyName}` : "Meine Packliste";
 
   return (
     <div className="flex flex-1 flex-col bg-background">
@@ -62,7 +71,7 @@ export function MyPackingListView({
       <main className="mx-auto w-full max-w-2xl flex-1 px-6 py-8">
         <div className="mb-6 flex items-center justify-between gap-3 print:hidden">
           <div>
-            <h1 className="text-lg font-semibold text-foreground">Meine Packliste</h1>
+            <h1 className="text-lg font-semibold text-foreground">{title}</h1>
             <p className="text-xs text-zinc-500 dark:text-zinc-400">{tripName}</p>
           </div>
           <button
@@ -89,11 +98,18 @@ export function MyPackingListView({
                 />
                 {item.name}
               </label>
+              {myFamilyId && item.claimedByParticipantId !== me.id && item.claimedByName && (
+                <span className="shrink-0 text-xs text-zinc-500 dark:text-zinc-400">
+                  {item.claimedByName}
+                </span>
+              )}
             </li>
           ))}
           {myItems.length === 0 && (
             <p className="text-sm text-zinc-500 dark:text-zinc-400">
-              Du hast noch keine Gegenstände übernommen.
+              {myFamilyId
+                ? "In eurer Familie wurde noch nichts übernommen."
+                : "Du hast noch keine Gegenstände übernommen."}
             </p>
           )}
         </ul>

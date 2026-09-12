@@ -14,8 +14,11 @@ export default async function MyPackingListPage({
     prisma.trip.findUnique({
       where: { shareToken },
       include: {
-        participants: { include: { person: true } },
-        packingItems: { orderBy: { createdAt: "asc" } },
+        participants: { include: { person: { include: { family: true } } } },
+        packingItems: {
+          include: { claimedBy: { include: { person: { include: { family: true } } } } },
+          orderBy: { createdAt: "asc" },
+        },
       },
     }),
     getAdminUser(),
@@ -23,13 +26,20 @@ export default async function MyPackingListPage({
 
   if (!trip) notFound();
 
-  const participants = trip.participants.map((p) => ({ id: p.id, name: p.person.name }));
+  const participants = trip.participants.map((p) => ({
+    id: p.id,
+    name: p.person.name,
+    familyId: p.person.familyId,
+    familyName: p.person.family?.name ?? null,
+  }));
 
   const items = trip.packingItems.map((item) => ({
     id: item.id,
     name: item.name,
     isPacked: item.isPacked,
     claimedByParticipantId: item.claimedByParticipantId,
+    claimedByFamilyId: item.claimedBy?.person.familyId ?? null,
+    claimedByName: item.claimedBy?.person.name ?? null,
   }));
 
   return (

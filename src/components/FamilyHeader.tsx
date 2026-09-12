@@ -32,9 +32,11 @@ export function FamilyHeader({
         {isAdminView && tripId && (
           <Link
             href={`/trips/${tripId}`}
-            className="shrink-0 text-xs font-medium text-accent hover:underline"
+            title="Zurück zum Admin-Bereich"
+            aria-label="Zurück zum Admin-Bereich"
+            className="shrink-0 text-2xl leading-none font-bold text-yellow-500 hover:text-yellow-400"
           >
-            ← Zurück zum Admin-Bereich
+            ←
           </Link>
         )}
       </div>

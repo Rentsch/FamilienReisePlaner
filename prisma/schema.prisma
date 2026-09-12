@@ -22,6 +22,19 @@ enum SeatRow {
 
 // ---- Stammdaten (owned by the admin, reusable across trips) ----
 
+// Groups multiple People (each still their own participant/login) under one
+// display name, e.g. so their packing lists can be shown together.
+model Family {
+  id          String   @id @default(cuid())
+  adminUserId String
+  name        String // Anzeigename, shown on the shared packing list
+  createdAt   DateTime @default(now())
+
+  people Person[]
+
+  @@unique([adminUserId, name])
+}
+
 model Person {
   id           String  @id @default(cuid())
   adminUserId  String // Supabase auth.users.id
@@ -29,6 +42,8 @@ model Person {
   canDrive     Boolean @default(false)
   backSeatOnly Boolean @default(false) // e.g. children who may only sit in the back
   photoUrl     String?
+  familyId     String?
+  family       Family? @relation(fields: [familyId], references: [id], onDelete: SetNull)
 
   participations TripParticipant[]
 

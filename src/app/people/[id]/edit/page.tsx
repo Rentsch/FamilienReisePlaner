@@ -14,7 +14,10 @@ export default async function EditPersonPage({
   const user = await requireAdmin();
   const { id } = await params;
 
-  const person = await prisma.person.findUnique({ where: { id, adminUserId: user.id } });
+  const [person, families] = await Promise.all([
+    prisma.person.findUnique({ where: { id, adminUserId: user.id } }),
+    prisma.family.findMany({ where: { adminUserId: user.id }, orderBy: { name: "asc" } }),
+  ]);
   if (!person) notFound();
 
   const updatePersonWithId = updatePerson.bind(null, person.id);
@@ -74,6 +77,22 @@ export default async function EditPersonPage({
               className="h-4 w-4"
             />
             Nur Rücksitz (Kind)
+          </label>
+
+          <label className="flex flex-col gap-1 text-sm text-zinc-700 dark:text-zinc-300">
+            Familie
+            <select
+              name="familyId"
+              defaultValue={person.familyId ?? ""}
+              className="rounded border border-[var(--border)] px-3 py-2 dark:bg-[var(--surface)]"
+            >
+              <option value="">Keine</option>
+              {families.map((family) => (
+                <option key={family.id} value={family.id}>
+                  {family.name}
+                </option>
+              ))}
+            </select>
           </label>
 
           <SubmitButton

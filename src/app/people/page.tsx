@@ -14,10 +14,17 @@ export default async function PeoplePage({
 }) {
   const user = await requireAdmin();
   const { error } = await searchParams;
-  const people = await prisma.person.findMany({
-    where: { adminUserId: user.id },
-    orderBy: { name: "asc" },
-  });
+  const [people, families] = await Promise.all([
+    prisma.person.findMany({
+      where: { adminUserId: user.id },
+      orderBy: { name: "asc" },
+      include: { family: true },
+    }),
+    prisma.family.findMany({
+      where: { adminUserId: user.id },
+      orderBy: { name: "asc" },
+    }),
+  ]);
 
   return (
     <div className="flex flex-1 flex-col">
@@ -62,6 +69,21 @@ export default async function PeoplePage({
             <input type="checkbox" name="backSeatOnly" className="h-4 w-4" />
             Nur Rücksitz (Kind)
           </label>
+          <label className="flex flex-col gap-1 text-sm text-zinc-700 dark:text-zinc-300">
+            Familie
+            <select
+              name="familyId"
+              defaultValue=""
+              className="rounded border border-[var(--border)] px-3 py-2 dark:bg-[var(--surface)]"
+            >
+              <option value="">Keine</option>
+              {families.map((family) => (
+                <option key={family.id} value={family.id}>
+                  {family.name}
+                </option>
+              ))}
+            </select>
+          </label>
           <SubmitButton
             pendingText="Wird hinzugefügt…"
             className="rounded-full bg-accent px-5 py-2 text-sm font-medium text-accent-foreground hover:brightness-110"
@@ -93,11 +115,12 @@ export default async function PeoplePage({
                 <p className="font-medium text-foreground">
                   {person.name}
                 </p>
-                {(person.canDrive || person.backSeatOnly) && (
+                {(person.canDrive || person.backSeatOnly || person.family) && (
                   <p className="text-xs text-zinc-500 dark:text-zinc-400">
                     {[
                       person.canDrive && "Kann fahren",
                       person.backSeatOnly && "Nur Rücksitz",
+                      person.family && person.family.name,
                     ]
                       .filter(Boolean)
                       .join(" · ")}

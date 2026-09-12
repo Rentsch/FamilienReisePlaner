@@ -27,15 +27,17 @@ export async function createPerson(formData: FormData) {
   const name = (formData.get("name") as string).trim();
   const canDrive = formData.get("canDrive") === "on";
   const backSeatOnly = formData.get("backSeatOnly") === "on";
+  const familyId = (formData.get("familyId") as string) || null;
   const photo = formData.get("photo") as File | null;
 
   const photoUrl = photo ? await uploadPhoto(supabase, user.id, photo) : undefined;
 
   await prisma.person.create({
-    data: { adminUserId: user.id, name, canDrive, backSeatOnly, photoUrl },
+    data: { adminUserId: user.id, name, canDrive, backSeatOnly, familyId, photoUrl },
   });
 
   revalidatePath("/people");
+  revalidatePath("/families");
 }
 
 export async function updatePerson(id: string, formData: FormData) {
@@ -45,16 +47,18 @@ export async function updatePerson(id: string, formData: FormData) {
   const name = (formData.get("name") as string).trim();
   const canDrive = formData.get("canDrive") === "on";
   const backSeatOnly = formData.get("backSeatOnly") === "on";
+  const familyId = (formData.get("familyId") as string) || null;
   const photo = formData.get("photo") as File | null;
 
   const photoUrl = photo ? await uploadPhoto(supabase, user.id, photo) : undefined;
 
   await prisma.person.update({
     where: { id, adminUserId: user.id },
-    data: { name, canDrive, backSeatOnly, ...(photoUrl ? { photoUrl } : {}) },
+    data: { name, canDrive, backSeatOnly, familyId, ...(photoUrl ? { photoUrl } : {}) },
   });
 
   revalidatePath("/people");
+  revalidatePath("/families");
   redirect("/people");
 }
 

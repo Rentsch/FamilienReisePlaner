@@ -7,6 +7,7 @@ import { SubmitButton } from "./SubmitButton";
 const links = [
   { href: "/", label: "Reisen" },
   { href: "/people", label: "Personen" },
+  { href: "/families", label: "Familien" },
   { href: "/vehicles", label: "Autos" },
   { href: "/trailers", label: "Anhänger" },
   { href: "/packing-lists", label: "Packlisten" },
