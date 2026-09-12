@@ -68,15 +68,11 @@ export function AppointmentModal({
     <>
       {trigger(openModal)}
       {open && (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4"
-          onClick={() => !pending && setOpen(false)}
-        >
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
           <div
             role="dialog"
             aria-modal="true"
             className="pop-in w-full max-w-sm rounded-xl border border-[var(--border)] bg-[var(--surface)] p-5 shadow-xl"
-            onClick={(e) => e.stopPropagation()}
           >
             <h2 className="text-base font-semibold text-foreground">{heading}</h2>
             <form onSubmit={handleSubmit} className="mt-4 flex flex-col gap-3">
@@ -93,7 +89,6 @@ export function AppointmentModal({
                 Anschrift
                 <input
                   name="address"
-                  required
                   defaultValue={initial?.address}
                   placeholder="Straße, PLZ Ort"
                   className="rounded border border-[var(--border)] px-3 py-2 dark:bg-[var(--surface)]"
