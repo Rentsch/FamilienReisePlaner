@@ -9,6 +9,7 @@ import { formatTripDate } from "@/lib/time";
 import { voteForVariant } from "@/app/t/[shareToken]/actions";
 import { deleteVariant } from "@/app/t/[shareToken]/variant/actions";
 import { ConfirmDeleteButton } from "@/components/ConfirmDeleteButton";
+import { FamilyHeader } from "@/components/FamilyHeader";
 import type { VehicleView } from "@/lib/variantView";
 
 const SLOT_SIZE = 44;
@@ -237,23 +238,16 @@ export function VariantDetail({
 
   return (
     <div className="flex flex-1 flex-col bg-background">
-      <header className="border-b border-[var(--border)] bg-[var(--surface)] px-6 py-4">
-        {isAdminView && (
-          <Link
-            href={`/trips/${tripId}`}
-            className="mb-1 block text-xs font-medium text-accent hover:underline"
-          >
-            ← Zurück zum Admin-Bereich
-          </Link>
-        )}
+      <FamilyHeader
+        backHref={`/t/${shareToken}/trip`}
+        backLabel="Zurück zur Reise"
+        isAdminView={isAdminView}
+        tripId={tripId}
+      />
+
+      <div className="border-b border-[var(--border)] bg-[var(--surface)] px-6 py-4">
         <div className="flex items-center justify-between gap-3">
           <div>
-            <Link
-              href={`/t/${shareToken}/trip`}
-              className="text-sm text-zinc-500 hover:text-foreground"
-            >
-              ← Alle Varianten
-            </Link>
             <h1 className="text-xl font-semibold text-foreground">{variant.name}</h1>
             <p className="text-xs text-zinc-500 dark:text-zinc-400">
               von {variant.creatorName} · {variant.voteCount} Stimme{variant.voteCount !== 1 && "n"}
@@ -291,7 +285,7 @@ export function VariantDetail({
         {exportError && (
           <p className="mt-2 text-right text-xs text-red-600 dark:text-red-400">{exportError}</p>
         )}
-      </header>
+      </div>
 
       <main className="mx-auto w-full max-w-2xl flex-1 px-4 py-6">
         <div ref={exportRef} className="flex flex-col gap-4 bg-background p-2">

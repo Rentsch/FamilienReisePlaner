@@ -2,9 +2,9 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import Link from "next/link";
 import { getStoredParticipant } from "@/lib/participant";
 import { setPackingItemPacked } from "@/app/t/[shareToken]/packing/actions";
+import { FamilyHeader } from "./FamilyHeader";
 
 type PackingItem = {
   id: string;
@@ -15,12 +15,16 @@ type PackingItem = {
 
 export function MyPackingListView({
   shareToken,
+  tripId,
   tripName,
+  isAdminView,
   participants,
   items,
 }: {
   shareToken: string;
+  tripId: string;
   tripName: string;
+  isAdminView?: boolean;
   participants: { id: string; name: string }[];
   items: PackingItem[];
 }) {
@@ -47,15 +51,20 @@ export function MyPackingListView({
 
   return (
     <div className="flex flex-1 flex-col bg-background">
-      <header className="border-b border-[var(--border)] bg-[var(--surface)] px-6 py-2.5 print:hidden">
-        <h1 className="truncate text-lg font-semibold text-foreground">{tripName} · Meine Packliste</h1>
-        <Link href={`/t/${shareToken}/packing`} className="text-[11px] font-medium text-accent hover:underline">
-          ← Zurück zur Packliste
-        </Link>
-      </header>
+      <FamilyHeader
+        className="print:hidden"
+        backHref={`/t/${shareToken}/packing`}
+        backLabel="Zurück zur Packliste"
+        isAdminView={isAdminView}
+        tripId={tripId}
+      />
 
       <main className="mx-auto w-full max-w-2xl flex-1 px-6 py-8">
-        <div className="mb-6 flex justify-end print:hidden">
+        <div className="mb-6 flex items-center justify-between gap-3 print:hidden">
+          <div>
+            <h1 className="text-lg font-semibold text-foreground">Meine Packliste</h1>
+            <p className="text-xs text-zinc-500 dark:text-zinc-400">{tripName}</p>
+          </div>
           <button
             type="button"
             onClick={() => window.print()}

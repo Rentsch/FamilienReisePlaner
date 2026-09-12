@@ -8,6 +8,7 @@ import { formatTripDate } from "@/lib/time";
 import { voteForVariant } from "@/app/t/[shareToken]/actions";
 import type { TripStats } from "@/lib/tripStats";
 import { TripStatsOverview } from "./TripStatsOverview";
+import { FamilyHeader } from "./FamilyHeader";
 
 type Variant = {
   id: string;
@@ -70,24 +71,19 @@ export function TripVariantsView({
 
   return (
     <div className="flex flex-1 flex-col bg-background">
-      <header className="border-b border-[var(--border)] bg-[var(--surface)] px-6 py-2.5">
-        <div className="flex items-baseline justify-between gap-3">
-          <h1 className="truncate text-lg font-semibold text-foreground">{tripName}</h1>
-          {formatTripDate(tripDate) && (
-            <p className="shrink-0 text-xs text-zinc-500 dark:text-zinc-400">{formatTripDate(tripDate)}</p>
-          )}
-        </div>
-        {isAdminView && (
-          <Link
-            href={`/trips/${tripId}`}
-            className="block text-right text-[11px] font-medium text-accent hover:underline"
-          >
-            ← Zurück zum Admin-Bereich
-          </Link>
-        )}
-      </header>
+      <FamilyHeader isAdminView={isAdminView} tripId={tripId} />
 
       <main className="mx-auto w-full max-w-2xl flex-1 px-6 py-8">
+        <div className="mb-3 flex flex-col items-center justify-center gap-1 rounded-xl border border-[var(--border)] bg-[var(--surface)] p-5 text-center">
+          <span className="text-2xl" aria-hidden>
+            🗺️
+          </span>
+          <span className="text-base font-semibold text-foreground">{tripName}</span>
+          {formatTripDate(tripDate) && (
+            <span className="text-xs text-zinc-500 dark:text-zinc-400">{formatTripDate(tripDate)}</span>
+          )}
+        </div>
+
         <div className="mb-6 rounded-xl border border-[var(--border)] bg-[var(--surface)] p-4">
           <TripStatsOverview stats={stats} hideVariantHint />
         </div>
@@ -114,7 +110,7 @@ export function TripVariantsView({
         </div>
 
         <div className="mb-3 flex items-center justify-between gap-2">
-          <h2 className="text-base font-semibold text-foreground">Varianten</h2>
+          <h2 className="text-base font-semibold text-foreground">Auto Aufteilung</h2>
           <div className="flex gap-1.5 sm:gap-2">
             {variants.length >= 2 && (
               <Link

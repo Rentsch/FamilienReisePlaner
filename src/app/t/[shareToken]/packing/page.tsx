@@ -52,6 +52,7 @@ export default async function PackingListPage({
   return (
     <PackingListView
       shareToken={shareToken}
+      tripId={trip.id}
       tripName={trip.name}
       isAdminView={isAdminView}
       participants={participants}

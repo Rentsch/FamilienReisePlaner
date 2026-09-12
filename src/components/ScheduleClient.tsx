@@ -1,10 +1,10 @@
 "use client";
 
 import { useRef, useState } from "react";
-import Link from "next/link";
 import { IconDownload, IconFileTypePdf, IconMapPin, IconPencil, IconPlus } from "@tabler/icons-react";
 import { ConfirmDeleteButton } from "@/components/ConfirmDeleteButton";
 import { AppointmentModal, type AppointmentInitial } from "@/components/AppointmentModal";
+import { FamilyHeader } from "@/components/FamilyHeader";
 import { createAppointment, deleteAppointment, updateAppointment } from "@/app/t/[shareToken]/schedule/actions";
 
 // Fixed width the export image is rendered at, regardless of the device that triggers it,
@@ -126,21 +126,14 @@ export function ScheduleClient({
 
   return (
     <div className="flex flex-1 flex-col bg-background">
-      <header className="border-b border-[var(--border)] bg-[var(--surface)] px-6 py-4">
-        {isAdminView && (
-          <Link
-            href={`/trips/${tripId}`}
-            className="mb-1 block text-xs font-medium text-accent hover:underline"
-          >
-            ← Zurück zum Admin-Bereich
-          </Link>
-        )}
-        <Link
-          href={`/t/${shareToken}/trip`}
-          className="text-sm text-zinc-500 hover:text-foreground"
-        >
-          ← Alle Varianten
-        </Link>
+      <FamilyHeader
+        backHref={`/t/${shareToken}/trip`}
+        backLabel="Zurück zur Reise"
+        isAdminView={isAdminView}
+        tripId={tripId}
+      />
+
+      <div className="border-b border-[var(--border)] bg-[var(--surface)] px-6 py-4">
         <div className="flex items-center justify-between gap-3">
           <h1 className="text-xl font-semibold text-foreground">Tagesablauf</h1>
           <div className="flex shrink-0 gap-2">
@@ -168,7 +161,7 @@ export function ScheduleClient({
           </div>
         </div>
         {exportError && <p className="mt-2 text-xs text-red-600 dark:text-red-400">{exportError}</p>}
-      </header>
+      </div>
 
       <main className="mx-auto w-full max-w-2xl flex-1 px-6 py-6">
         <div ref={exportRef} className="flex flex-col gap-6 bg-background p-2">

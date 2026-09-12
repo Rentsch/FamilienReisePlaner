@@ -11,6 +11,7 @@ import {
   unclaimPackingItem,
   addPackingListTemplateToTrip,
 } from "@/app/t/[shareToken]/packing/actions";
+import { FamilyHeader } from "./FamilyHeader";
 
 type PackingItem = {
   id: string;
@@ -22,6 +23,7 @@ type PackingItem = {
 
 export function PackingListView({
   shareToken,
+  tripId,
   tripName,
   isAdminView,
   participants,
@@ -30,6 +32,7 @@ export function PackingListView({
   templates,
 }: {
   shareToken: string;
+  tripId: string;
   tripName: string;
   isAdminView?: boolean;
   participants: { id: string; name: string }[];
@@ -73,16 +76,18 @@ export function PackingListView({
 
   return (
     <div className="flex flex-1 flex-col bg-background">
-      <header className="border-b border-[var(--border)] bg-[var(--surface)] px-6 py-2.5 print:hidden">
-        <div className="flex items-baseline justify-between gap-3">
-          <h1 className="truncate text-lg font-semibold text-foreground">{tripName} · Packliste</h1>
-        </div>
-        <Link href={`/t/${shareToken}/trip`} className="text-[11px] font-medium text-accent hover:underline">
-          ← Zurück zur Reise
-        </Link>
-      </header>
+      <FamilyHeader
+        className="print:hidden"
+        backHref={`/t/${shareToken}/trip`}
+        backLabel="Zurück zur Reise"
+        isAdminView={isAdminView}
+        tripId={tripId}
+      />
 
       <main className="mx-auto w-full max-w-2xl flex-1 px-6 py-8">
+        <h1 className="text-lg font-semibold text-foreground">Packliste</h1>
+        <p className="mb-6 text-xs text-zinc-500 dark:text-zinc-400">{tripName}</p>
+
         <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
           <p className="text-sm text-zinc-500 dark:text-zinc-400">
             <strong className="font-semibold text-foreground">{stats.claimedCount}</strong> von{" "}

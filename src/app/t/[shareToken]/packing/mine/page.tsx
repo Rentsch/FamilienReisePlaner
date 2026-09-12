@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
+import { getAdminUser } from "@/lib/auth";
 import { MyPackingListView } from "@/components/MyPackingListView";
 
 export default async function MyPackingListPage({
@@ -9,13 +10,16 @@ export default async function MyPackingListPage({
 }) {
   const { shareToken } = await params;
 
-  const trip = await prisma.trip.findUnique({
-    where: { shareToken },
-    include: {
-      participants: { include: { person: true } },
-      packingItems: { orderBy: { createdAt: "asc" } },
-    },
-  });
+  const [trip, adminUser] = await Promise.all([
+    prisma.trip.findUnique({
+      where: { shareToken },
+      include: {
+        participants: { include: { person: true } },
+        packingItems: { orderBy: { createdAt: "asc" } },
+      },
+    }),
+    getAdminUser(),
+  ]);
 
   if (!trip) notFound();
 
@@ -31,7 +35,9 @@ export default async function MyPackingListPage({
   return (
     <MyPackingListView
       shareToken={shareToken}
+      tripId={trip.id}
       tripName={trip.name}
+      isAdminView={adminUser?.id === trip.adminUserId}
       participants={participants}
       items={items}
     />

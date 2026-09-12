@@ -2,10 +2,10 @@
 
 import { Fragment, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import Link from "next/link";
 import { IconBike, IconCaravan, IconSteeringWheel, IconPlus, IconX } from "@tabler/icons-react";
 import { getStoredParticipant } from "@/lib/participant";
 import { formatTripDate } from "@/lib/time";
+import { FamilyHeader } from "@/components/FamilyHeader";
 import type { VehicleView } from "@/lib/variantView";
 
 type VariantSummary = {
@@ -154,21 +154,20 @@ export function VariantCompareView({
 
   return (
     <div className="flex flex-1 flex-col bg-background">
-      <header className="border-b border-[var(--border)] bg-[var(--surface)] px-6 py-4">
-        {isAdminView && (
-          <Link href={`/trips/${tripId}`} className="mb-1 block text-xs font-medium text-accent hover:underline">
-            ← Zurück zum Admin-Bereich
-          </Link>
-        )}
-        <Link href={`/t/${shareToken}/trip`} className="text-sm text-zinc-500 hover:text-foreground">
-          ← Alle Varianten
-        </Link>
-        <h1 className="text-xl font-semibold text-foreground">Varianten vergleichen</h1>
+      <FamilyHeader
+        backHref={`/t/${shareToken}/trip`}
+        backLabel="Zurück zur Reise"
+        isAdminView={isAdminView}
+        tripId={tripId}
+      />
+
+      <div className="border-b border-[var(--border)] bg-[var(--surface)] px-6 py-4">
+        <h1 className="text-xl font-semibold text-foreground">Auto Aufteilung vergleichen</h1>
         <p className="text-xs text-zinc-500 dark:text-zinc-400">
           {tripName}
           {formatTripDate(tripDate) && ` · ${formatTripDate(tripDate)}`}
         </p>
-      </header>
+      </div>
 
       <main className="flex-1 px-4 py-6">
         <label className="mb-3 flex max-w-4xl items-start gap-2 text-sm text-zinc-600 dark:text-zinc-300">
