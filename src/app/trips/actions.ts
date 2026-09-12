@@ -10,6 +10,24 @@ function num(formData: FormData, key: string) {
   return v ? Number(v) : undefined;
 }
 
+// Prefixes the share link with a readable slug of the trip name (e.g.
+// "sommerurlaub-ostsee-a1b2c3d4e5f6") so multiple trip links stay
+// distinguishable at a glance, while keeping enough random suffix entropy
+// that the link is still unguessable — it's the only thing gating access to
+// a trip for people without a login. Only used at creation time: renaming a
+// trip later never changes its shareToken, so existing share links keep
+// working unchanged.
+function makeShareToken(name: string) {
+  const namePart = name
+    .trim()
+    .toLowerCase()
+    .replace(/[^\p{L}\p{N}]+/gu, "-")
+    .replace(/^-+|-+$/g, "")
+    .slice(0, 40);
+  const randomPart = crypto.randomUUID().replace(/-/g, "").slice(0, 12);
+  return namePart ? `${namePart}-${randomPart}` : randomPart;
+}
+
 export async function createTrip(formData: FormData) {
   const user = await requireAdmin();
 
@@ -25,6 +43,7 @@ export async function createTrip(formData: FormData) {
     data: {
       adminUserId: user.id,
       name,
+      shareToken: makeShareToken(name),
       description,
       date: date ? new Date(date) : undefined,
       travelTimeMinutes: num(formData, "travelTimeMinutes"),
