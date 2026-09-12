@@ -13,6 +13,7 @@ import {
   addPackingListTemplateToTrip,
 } from "@/app/t/[shareToken]/packing/actions";
 import { FamilyHeader } from "./FamilyHeader";
+import { ConfirmDeleteButton } from "./ConfirmDeleteButton";
 
 // Fixed width the export image is rendered at, regardless of the device that triggers it,
 // so the exported PNG looks identical whether it's generated from a phone or a desktop.
@@ -72,6 +73,20 @@ export function PackingListView({
 
   if (!checked || !isValid || !me) return null;
 
+  // Open items first, then what I claimed myself, then everything else grouped by
+  // family (alphabetically) so each family's items sit together at the bottom.
+  function itemRank(item: PackingItem) {
+    if (item.claimedByParticipantId === null) return 0;
+    if (item.claimedByParticipantId === me!.id) return 1;
+    return 2;
+  }
+  const sortedItems = [...items].sort((a, b) => {
+    const rankDiff = itemRank(a) - itemRank(b);
+    if (rankDiff !== 0) return rankDiff;
+    if (itemRank(a) === 2) return (a.claimedByName ?? "").localeCompare(b.claimedByName ?? "", "de");
+    return 0;
+  });
+
   async function handleClaim(itemId: string) {
     if (!me) return;
     setPendingItemId(itemId);
@@ -81,9 +96,7 @@ export function PackingListView({
 
   async function handleUnclaim(itemId: string) {
     if (!me) return;
-    setPendingItemId(itemId);
     await unclaimPackingItem(shareToken, itemId, me.id);
-    setPendingItemId(null);
   }
 
   async function handleExport() {
@@ -240,7 +253,7 @@ export function PackingListView({
             <h2 className="text-base font-semibold text-foreground">Packliste</h2>
           </div>
           <ul className="flex flex-col gap-2">
-            {items.map((item) => {
+            {sortedItems.map((item) => {
               const claimedByMe = item.claimedByParticipantId === me.id;
               return (
                 <li
@@ -250,9 +263,6 @@ export function PackingListView({
                   <span className="flex-1 text-sm text-foreground">
                     {item.name}
                     {item.isPacked && <span className="ml-2 text-xs text-zinc-500 dark:text-zinc-400">(gepackt)</span>}
-                  </span>
-                  <span className="shrink-0 text-xs text-zinc-500 dark:text-zinc-400">
-                    {item.claimedByName ?? "offen"}
                   </span>
                   {item.claimedByName === null ? (
                     <button
@@ -264,18 +274,27 @@ export function PackingListView({
                     >
                       Ich nehme es mit
                     </button>
+                  ) : claimedByMe ? (
+                    <>
+                      <span data-export-hide>
+                        <ConfirmDeleteButton
+                          action={() => handleUnclaim(item.id)}
+                          confirmTitle="Wirklich freigeben?"
+                          confirmMessage={<>„{item.name}“ wirklich wieder freigeben?</>}
+                          label="Doch nicht ich"
+                          pendingLabel="Wird freigegeben…"
+                          confirmLabel="Ja, freigeben"
+                          className="shrink-0 rounded-full border border-[var(--border)] px-3 py-1.5 text-xs font-medium hover:bg-black/[.04] disabled:opacity-50 dark:hover:bg-white/[.06]"
+                        />
+                      </span>
+                      <span className="shrink-0 text-xs text-zinc-500 dark:text-zinc-400">
+                        {item.claimedByName}
+                      </span>
+                    </>
                   ) : (
-                    claimedByMe && (
-                      <button
-                        type="button"
-                        data-export-hide
-                        disabled={pendingItemId === item.id}
-                        onClick={() => handleUnclaim(item.id)}
-                        className="shrink-0 rounded-full border border-[var(--border)] px-3 py-1.5 text-xs font-medium hover:bg-black/[.04] disabled:opacity-50 dark:hover:bg-white/[.06]"
-                      >
-                        Doch nicht ich
-                      </button>
-                    )
+                    <span className="shrink-0 text-xs text-zinc-500 dark:text-zinc-400">
+                      {item.claimedByName}
+                    </span>
                   )}
                 </li>
               );
