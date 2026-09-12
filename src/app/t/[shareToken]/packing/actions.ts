@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { getAdminUser } from "@/lib/auth";
+import { parseItemNames } from "@/lib/parseItemNames";
 
 // Anyone with the share link may add items and claim/unclaim them — same
 // trust boundary as voting/creating variants and managing the schedule.
@@ -19,10 +20,12 @@ function revalidatePackingPaths(shareToken: string) {
 
 export async function addPackingItem(shareToken: string, formData: FormData) {
   const trip = await resolveTrip(shareToken);
-  const name = (formData.get("name") as string).trim();
-  if (!name) return;
+  const names = parseItemNames(formData.get("name") as string);
+  if (names.length === 0) return;
 
-  await prisma.tripPackingItem.create({ data: { tripId: trip.id, name } });
+  await prisma.tripPackingItem.createMany({
+    data: names.map((name) => ({ tripId: trip.id, name })),
+  });
   revalidatePackingPaths(shareToken);
 }
 

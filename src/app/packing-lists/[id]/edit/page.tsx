@@ -64,8 +64,12 @@ export default async function EditPackingListTemplatePage({
             <input
               name="name"
               required
+              placeholder="z.B. Zelt, Erste-Hilfe-Set, Grill"
               className="rounded border border-[var(--border)] px-3 py-2 dark:bg-[var(--surface)]"
             />
+            <span className="text-xs text-zinc-500 dark:text-zinc-400">
+              Mehrere Gegenstände mit Komma trennen
+            </span>
           </label>
           <SubmitButton
             pendingText="Wird hinzugefügt…"
