@@ -92,33 +92,45 @@ export function TripVariantsView({
           <TripStatsOverview stats={stats} hideVariantHint />
         </div>
 
-        <div className="mb-6 flex justify-end gap-1.5 sm:gap-2">
+        <div className="mb-6 grid grid-cols-2 gap-3">
           <Link
             href={`/t/${shareToken}/schedule`}
-            className="rounded-full border border-[var(--border)] px-3 py-2 text-xs font-medium hover:bg-black/[.04] sm:px-4 sm:text-sm dark:hover:bg-white/[.06]"
+            className="flex flex-col items-center justify-center gap-1.5 rounded-xl border border-[var(--border)] bg-[var(--surface)] p-5 text-center hover:bg-black/[.04] dark:hover:bg-white/[.06]"
           >
-            Tagesablauf
+            <span className="text-2xl" aria-hidden>
+              🗓️
+            </span>
+            <span className="text-sm font-medium text-foreground">Tagesablauf</span>
           </Link>
           <Link
             href={`/t/${shareToken}/packing`}
-            className="rounded-full border border-[var(--border)] px-3 py-2 text-xs font-medium hover:bg-black/[.04] sm:px-4 sm:text-sm dark:hover:bg-white/[.06]"
+            className="flex flex-col items-center justify-center gap-1.5 rounded-xl border border-[var(--border)] bg-[var(--surface)] p-5 text-center hover:bg-black/[.04] dark:hover:bg-white/[.06]"
           >
-            Packliste
+            <span className="text-2xl" aria-hidden>
+              🎒
+            </span>
+            <span className="text-sm font-medium text-foreground">Packliste</span>
           </Link>
-          {variants.length >= 2 && (
+        </div>
+
+        <div className="mb-3 flex items-center justify-between gap-2">
+          <h2 className="text-base font-semibold text-foreground">Varianten</h2>
+          <div className="flex gap-1.5 sm:gap-2">
+            {variants.length >= 2 && (
+              <Link
+                href={`/t/${shareToken}/compare`}
+                className="rounded-full border border-[var(--border)] px-3 py-2 text-xs font-medium hover:bg-black/[.04] sm:px-4 sm:text-sm dark:hover:bg-white/[.06]"
+              >
+                Vergleich
+              </Link>
+            )}
             <Link
-              href={`/t/${shareToken}/compare`}
-              className="rounded-full border border-[var(--border)] px-3 py-2 text-xs font-medium hover:bg-black/[.04] sm:px-4 sm:text-sm dark:hover:bg-white/[.06]"
+              href={`/t/${shareToken}/variant/new`}
+              className="rounded-full bg-accent px-3 py-2 text-xs font-medium text-accent-foreground hover:brightness-110 sm:px-5 sm:text-sm"
             >
-              Vergleich
+              Neue Variante
             </Link>
-          )}
-          <Link
-            href={`/t/${shareToken}/variant/new`}
-            className="rounded-full bg-accent px-3 py-2 text-xs font-medium text-accent-foreground hover:brightness-110 sm:px-5 sm:text-sm"
-          >
-            Neue Variante
-          </Link>
+          </div>
         </div>
 
         <ul className="flex flex-col gap-3">
