@@ -80,6 +80,42 @@ model Trip {
   tripTrailers TripTrailer[]
   variants     Variant[]
   appointments Appointment[]
+  packingItems TripPackingItem[]
+}
+
+// ---- Packing lists ----
+
+// Admin-owned, reusable list of items (e.g. "Camping-Ausrüstung") that can be
+// attached to a trip. Attaching copies the items as a one-time snapshot.
+model PackingListTemplate {
+  id          String   @id @default(cuid())
+  adminUserId String
+  name        String
+  createdAt   DateTime @default(now())
+
+  items PackingListTemplateItem[]
+}
+
+model PackingListTemplateItem {
+  id         String               @id @default(cuid())
+  templateId String
+  template   PackingListTemplate  @relation(fields: [templateId], references: [id], onDelete: Cascade)
+  name       String
+}
+
+// A shared, one-off item on a trip's packing list (e.g. "Erste-Hilfe-Set").
+// At most one participant can claim it; only that participant may release it.
+model TripPackingItem {
+  id                     String           @id @default(cuid())
+  tripId                 String
+  trip                   Trip             @relation(fields: [tripId], references: [id], onDelete: Cascade)
+  name                   String
+  claimedByParticipantId String?
+  claimedBy              TripParticipant? @relation(fields: [claimedByParticipantId], references: [id])
+  isPacked               Boolean          @default(false)
+  createdAt              DateTime         @default(now())
+
+  @@index([tripId])
 }
 
 // A single entry in a trip's daily schedule ("Tagesablauf").
@@ -120,10 +156,11 @@ model TripParticipant {
   person   Person  @relation(fields: [personId], references: [id])
   hasBike  Boolean @default(false)
 
-  createdVariants   Variant[]          @relation("VariantCreator")
-  personAssignments PersonAssignment[]
-  bikeAssignments   BikeAssignment[]
-  votes             Vote[]
+  createdVariants     Variant[]          @relation("VariantCreator")
+  personAssignments   PersonAssignment[]
+  bikeAssignments     BikeAssignment[]
+  votes               Vote[]
+  claimedPackingItems TripPackingItem[]
 
   @@unique([tripId, personId])
 }

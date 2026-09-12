@@ -9,6 +9,7 @@ const links = [
   { href: "/people", label: "Personen" },
   { href: "/vehicles", label: "Autos" },
   { href: "/trailers", label: "Anhänger" },
+  { href: "/packing-lists", label: "Packlisten" },
 ];
 
 export function AdminNav({ email }: { email: string }) {

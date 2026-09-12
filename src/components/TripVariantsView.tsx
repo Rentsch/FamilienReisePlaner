@@ -99,6 +99,12 @@ export function TripVariantsView({
           >
             Tagesablauf
           </Link>
+          <Link
+            href={`/t/${shareToken}/packing`}
+            className="rounded-full border border-[var(--border)] px-3 py-2 text-xs font-medium hover:bg-black/[.04] sm:px-4 sm:text-sm dark:hover:bg-white/[.06]"
+          >
+            Packliste
+          </Link>
           {variants.length >= 2 && (
             <Link
               href={`/t/${shareToken}/compare`}
