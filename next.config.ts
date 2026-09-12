@@ -10,6 +10,13 @@ const nextConfig: NextConfig = {
       },
     ],
   },
+  experimental: {
+    serverActions: {
+      // Photos taken directly with a phone camera are often several MB;
+      // the 1MB default made "Termin"-Fotos-Upload fail with a generic error.
+      bodySizeLimit: "15mb",
+    },
+  },
 };
 
 export default nextConfig;
