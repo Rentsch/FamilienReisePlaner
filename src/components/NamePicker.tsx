@@ -16,7 +16,7 @@ export function NamePicker({
   tripDate,
 }: {
   shareToken: string;
-  participants: { id: string; name: string }[];
+  participants: { id: string; name: string; familyName: string | null }[];
   redirectTo: string;
   stats: TripStats;
   tripName: string;
@@ -58,18 +58,25 @@ export function NamePicker({
             </p>
           </div>
 
-          <select
-            value={selected}
-            onChange={(e) => setSelected(e.target.value)}
-            className="rounded border border-[var(--border)] px-3 py-2 dark:bg-[var(--surface)]"
-          >
-            <option value="">Bitte wählen…</option>
+          <div className="flex flex-col gap-2">
             {participants.map((p) => (
-              <option key={p.id} value={p.id}>
-                {p.name}
-              </option>
+              <button
+                key={p.id}
+                type="button"
+                onClick={() => setSelected(p.id)}
+                className={`flex items-center justify-between gap-2 rounded-lg border px-4 py-2 text-left text-sm transition-colors ${
+                  selected === p.id
+                    ? "border-accent bg-accent/[.06]"
+                    : "border-[var(--border)] hover:bg-black/[.04] dark:hover:bg-white/[.06]"
+                }`}
+              >
+                <span className="font-medium text-foreground">{p.name}</span>
+                {p.familyName && (
+                  <span className="shrink-0 text-xs text-zinc-400 dark:text-zinc-500">{p.familyName}</span>
+                )}
+              </button>
             ))}
-          </select>
+          </div>
 
           <button
             disabled={!selected}

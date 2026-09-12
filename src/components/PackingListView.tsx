@@ -113,6 +113,16 @@ export function PackingListView({
     const clone = exportRef.current.cloneNode(true) as HTMLDivElement;
     clone.style.width = `${EXPORT_WIDTH}px`;
     clone.querySelectorAll("[data-export-hide]").forEach((el) => el.remove());
+    // Lay the item list out in two columns just for the export — keeps the
+    // on-screen single-column list (better for tapping) untouched, while
+    // stopping the shared image from getting too tall with a long list.
+    const list = clone.querySelector("ul");
+    if (list instanceof HTMLElement) {
+      list.style.display = "grid";
+      list.style.gridTemplateColumns = "1fr 1fr";
+      list.style.columnGap = "12px";
+      list.style.rowGap = "8px";
+    }
     host.appendChild(clone);
     document.body.appendChild(host);
 

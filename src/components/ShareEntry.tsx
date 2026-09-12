@@ -15,7 +15,7 @@ export function ShareEntry({
   tripDate,
 }: {
   shareToken: string;
-  participants: { id: string; name: string }[];
+  participants: { id: string; name: string; familyName: string | null }[];
   redirectTo: string;
   stats: TripStats;
   tripName: string;

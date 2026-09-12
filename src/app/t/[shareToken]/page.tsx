@@ -13,7 +13,7 @@ export default async function ShareTokenPage({
   const trip = await prisma.trip.findUnique({
     where: { shareToken },
     include: {
-      participants: { include: { person: true } },
+      participants: { include: { person: { include: { family: true } } } },
       _count: { select: { tripVehicles: true, variants: true } },
     },
   });
@@ -23,7 +23,7 @@ export default async function ShareTokenPage({
   // children (backSeatOnly) don't use the app themselves, so they're not selectable here
   const participants = trip.participants
     .filter((p) => !p.person.backSeatOnly)
-    .map((p) => ({ id: p.id, name: p.person.name }));
+    .map((p) => ({ id: p.id, name: p.person.name, familyName: p.person.family?.name ?? null }));
 
   const stats = computeTripStats({
     participants: trip.participants,
