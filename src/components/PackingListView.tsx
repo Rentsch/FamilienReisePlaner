@@ -86,6 +86,7 @@ export function PackingListView({
     if (itemRank(a) === 2) return (a.claimedByName ?? "").localeCompare(b.claimedByName ?? "", "de");
     return 0;
   });
+  const myClaimedCount = items.filter((item) => item.claimedByParticipantId === me.id).length;
 
   async function handleClaim(itemId: string) {
     if (!me) return;
@@ -180,7 +181,8 @@ export function PackingListView({
         <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
           <p className="text-sm text-zinc-500 dark:text-zinc-400">
             <strong className="font-semibold text-foreground">{stats.claimedCount}</strong> von{" "}
-            <strong className="font-semibold text-foreground">{stats.totalCount}</strong> vergeben ·{" "}
+            <strong className="font-semibold text-foreground">{stats.totalCount}</strong> übernommen, davon{" "}
+            <strong className="font-semibold text-foreground">{myClaimedCount}</strong> von dir ·{" "}
             <strong className="font-semibold text-foreground">{stats.packedCount}</strong> gepackt
           </p>
           <div className="flex gap-2">
