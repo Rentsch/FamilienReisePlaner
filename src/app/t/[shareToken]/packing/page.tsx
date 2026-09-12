@@ -17,7 +17,7 @@ export default async function PackingListPage({
       include: {
         participants: { include: { person: true } },
         packingItems: {
-          include: { claimedBy: { include: { person: true } } },
+          include: { claimedBy: { include: { person: { include: { family: true } } } } },
           orderBy: { createdAt: "asc" },
         },
       },
@@ -44,7 +44,7 @@ export default async function PackingListPage({
     name: item.name,
     isPacked: item.isPacked,
     claimedByParticipantId: item.claimedByParticipantId,
-    claimedByName: item.claimedBy?.person.name ?? null,
+    claimedByName: item.claimedBy?.person.family?.name ?? item.claimedBy?.person.name ?? null,
   }));
 
   const stats = computePackingStats(items);
