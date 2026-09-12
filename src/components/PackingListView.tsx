@@ -114,6 +114,7 @@ export function PackingListView({
     const clone = exportRef.current.cloneNode(true) as HTMLDivElement;
     clone.style.width = `${EXPORT_WIDTH}px`;
     clone.querySelectorAll("[data-export-hide]").forEach((el) => el.remove());
+    clone.querySelectorAll("[data-export-show]").forEach((el) => el.removeAttribute("hidden"));
     // Lay the item list out in two columns just for the export — keeps the
     // on-screen single-column list (better for tapping) untouched, while
     // stopping the shared image from getting too tall with a long list.
@@ -260,7 +261,7 @@ export function PackingListView({
         </form>
 
         <div ref={exportRef} className="flex flex-col gap-2 bg-background">
-          <div className="mb-2">
+          <div data-export-show hidden className="mb-2">
             <p className="text-xs text-zinc-500 dark:text-zinc-400">{tripName}</p>
             <h2 className="text-base font-semibold text-foreground">Packliste</h2>
           </div>
